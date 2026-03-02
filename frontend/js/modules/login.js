@@ -49,7 +49,6 @@ form.addEventListener("submit", async (event) => {
 
   let result = await findUserByEmailAndPassword(email, password);
   if (result.error && navigator.onLine) {
-    await new Promise((resolve) => setTimeout(resolve, 700));
     result = await findUserByEmailAndPassword(email, password);
   }
 

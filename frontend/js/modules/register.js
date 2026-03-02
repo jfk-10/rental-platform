@@ -44,7 +44,6 @@ form.addEventListener("submit", async (event) => {
 
   let result = await createUser({ name, email, password, role });
   if (result.error && navigator.onLine) {
-    await new Promise((resolve) => setTimeout(resolve, 700));
     result = await createUser({ name, email, password, role });
   }
 
