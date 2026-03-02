@@ -15,7 +15,7 @@ Rental Platform is a multi-role web app for managing rental properties and opera
 - `config/` – shared app configuration constants.
 - `docs/` – architecture notes and API usage references.
 
-## Local run
+## Run locally
 Because the frontend is static, you can serve it with any simple web server:
 
 ```bash
@@ -23,7 +23,18 @@ cd frontend
 python -m http.server 8080
 ```
 
-Then open `http://localhost:8080/public/index.html`.
+Then open `http://localhost:8080/`.
+
+## Go live with GitHub Pages
+This repository now includes a workflow at `.github/workflows/deploy-pages.yml`.
+
+1. Push the repository to GitHub.
+2. Make sure your default branch is `main`.
+3. In GitHub, open **Settings → Pages** and set **Source** to **GitHub Actions**.
+4. Push to `main` (or run the workflow manually from **Actions**).
+5. After deployment completes, your live site URL appears in the workflow summary.
+
+The workflow deploys the `frontend/` directory directly, so your home page is served from `index.html`.
 
 ## Backend expectations
 This project expects a Supabase project with tables from `backend/database/schema.sql` and a storage bucket named `property-images`.
