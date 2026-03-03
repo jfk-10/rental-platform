@@ -6,6 +6,10 @@
   gap: 1rem;
 }
 
+.dashboard-layout--full {
+  grid-template-columns: 1fr;
+}
+
 .sidebar {
   background: linear-gradient(160deg, color-mix(in srgb, var(--surface) 86%, white 14%), var(--surface));
   border: 1px solid var(--line);

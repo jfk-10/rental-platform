@@ -22,8 +22,7 @@ function getNavByRole(role) {
       ["Properties", "pages/property-list.html"],
       ["Agreements", "pages/agreements.html"],
       ["Payments", "pages/payments.html"],
-      ["Maintenance", "pages/maintenance.html"],
-      ["Profile", "pages/profile.html"]
+      ["Maintenance", "pages/maintenance.html"]
     ];
   }
 
@@ -33,8 +32,7 @@ function getNavByRole(role) {
       ["Browse", "pages/property-list.html"],
       ["Agreements", "pages/agreements.html"],
       ["Payments", "pages/payments.html"],
-      ["Maintenance", "pages/maintenance.html"],
-      ["Profile", "pages/profile.html"]
+      ["Maintenance", "pages/maintenance.html"]
     ];
   }
 
@@ -44,8 +42,7 @@ function getNavByRole(role) {
       ["Properties", "pages/property-list.html"],
       ["Agreements", "pages/agreements.html"],
       ["Payments", "pages/payments.html"],
-      ["Maintenance", "pages/maintenance.html"],
-      ["Profile", "pages/profile.html"]
+      ["Maintenance", "pages/maintenance.html"]
     ];
   }
 
@@ -77,7 +74,7 @@ function renderUtilityBar() {
       <a class="app-brand" href="${prefix}index.html">🏠 Rental Platform</a>
       <nav class="app-links">${links}</nav>
       <div class="app-user-actions">
-        ${user ? `<a class="btn btn-secondary" href="${prefix}pages/profile.html">My profile</a>` : `<a class="btn btn-secondary" href="${prefix}pages/login.html">Login</a><a class="btn btn-primary" href="${prefix}pages/register.html">Sign up</a>`}
+        ${user ? `<a class="btn btn-secondary" href="${prefix}pages/profile.html">My Profile</a>` : `<a class="btn btn-secondary" href="${prefix}pages/login.html">Login</a><a class="btn btn-primary" href="${prefix}pages/register.html">Sign up</a>`}
       </div>
     </div>
   `;
