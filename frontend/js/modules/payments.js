@@ -9,9 +9,6 @@ if (!user) throw new Error("Unauthorized");
 const paymentForm = document.getElementById("paymentForm");
 const agreementSelect = document.getElementById("agreementId");
 const paymentTableBody = document.getElementById("paymentTableBody");
-const roleTag = document.getElementById("roleTag");
-
-roleTag.textContent = `Logged in as: ${user.role}`;
 
 if (user.role === "tenant") {
   paymentForm.style.display = "none";
