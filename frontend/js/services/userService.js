@@ -40,7 +40,8 @@ export async function getAllUsers() {
 export async function saveOwnerProfile(userId, payload) {
   const parsedUserId = Number(userId);
   const phone = String(payload.phone ?? "").trim();
-  const ownerType = payload.owner_type;
+  const ownerTypeValue = String(payload.owner_type ?? "").trim();
+  const ownerType = ownerTypeValue.toLowerCase() === "nri" ? "NRI" : "Local";
   const city = String(payload.city ?? "").trim();
   const address = String(payload.address ?? "").trim();
 
