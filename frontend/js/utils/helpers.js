@@ -22,28 +22,30 @@ export function setFlashMessage(message, type = "success", scope = "global") {
   sessionStorage.setItem(getFlashStorageKey(scope), JSON.stringify({ message, type }));
 }
 
-function ensureToastStack() {
-  let stack = document.querySelector(".toast-stack");
-  if (!stack) {
-    stack = document.createElement("div");
-    stack.className = "toast-stack";
-    document.body.appendChild(stack);
+function ensureToastContainer() {
+  let container = document.getElementById("toast-container");
+  if (!container) {
+    container = document.createElement("div");
+    container.id = "toast-container";
+    document.body.appendChild(container);
   }
-  return stack;
+  return container;
 }
 
 export function showToast(message, type = "success") {
-  const stack = ensureToastStack();
-  stack.innerHTML = "";
+  const container = ensureToastContainer();
   const toast = document.createElement("div");
-  toast.className = `toast ${type === "error" ? "error" : "success"}`;
+  toast.className = "toast";
+  toast.classList.add(["success", "error", "info", "warning"].includes(type) ? type : "info");
   toast.textContent = message;
-  stack.appendChild(toast);
+  container.appendChild(toast);
 
   setTimeout(() => {
     toast.remove();
   }, 2000);
 }
+
+window.showToast = showToast;
 
 export function renderFlashMessage(scope = "global") {
   const raw = sessionStorage.getItem(getFlashStorageKey(scope));
