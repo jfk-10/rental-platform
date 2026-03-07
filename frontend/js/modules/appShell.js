@@ -79,27 +79,23 @@ function renderUtilityBar() {
   const roleLabel = role ? role.charAt(0).toUpperCase() + role.slice(1) : "Guest";
 
   utility.innerHTML = `
-    <div class="app-nav shell-panel">
+    <div class="app-nav shell-panel navbar-container">
       <a class="app-brand" href="${prefix}index.html">🏠 Rental Platform</a>
       <nav class="app-links">${links}</nav>
       <div class="app-user-actions">
         ${
           user
-            ? `<details class="profile-menu"><summary class="app-profile-link"><span class="app-avatar" aria-hidden="true">${initials}</span><span class="app-profile-meta"><span>Profile</span><span class="role-chip ${getRoleBadgeClass(role)}">${roleLabel}</span></span></summary><div class="profile-dropdown"><a href="${prefix}pages/profile.html">Open Profile</a><button type="button" id="profileLogoutBtn" class="profile-logout">Logout</button></div></details>`
+            ? `<button type="button" id="profileNavBtn" class="app-profile-link profile-btn"><span class="app-avatar" aria-hidden="true">${initials}</span><span class="app-profile-meta"><span>Profile</span><span class="role-badge ${getRoleBadgeClass(role)}">${roleLabel}</span></span></button>`
             : `<a class="btn btn-secondary" href="${prefix}pages/login.html">Login</a><a class="btn btn-primary" href="${prefix}pages/register.html">Sign up</a>`
         }
       </div>
     </div>
   `;
 
-  const logoutButton = document.getElementById("profileLogoutBtn");
-  if (logoutButton) {
-    logoutButton.addEventListener("click", () => {
-      localStorage.removeItem("user");
-      localStorage.removeItem("userId");
-      localStorage.removeItem("role");
-      localStorage.removeItem("name");
-      window.location.href = `${prefix}pages/login.html`;
+  const profileButton = document.getElementById("profileNavBtn");
+  if (profileButton) {
+    profileButton.addEventListener("click", () => {
+      window.location.href = `${prefix}pages/profile.html`;
     });
   }
 }
