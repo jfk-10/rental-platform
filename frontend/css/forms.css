@@ -26,9 +26,9 @@
 .auth-form { display: grid; gap: 0.85rem; }
 .auth-links { margin-top: 1rem; text-align: center; }
 
-.content-stack { display: grid; gap: 1rem; }
-.panel { border-radius: var(--radius-md); padding: clamp(0.9rem, 1.8vw, 1.3rem); }
-.form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.85rem; }
+.content-stack { display: grid; gap: var(--section-gap); }
+.panel { border-radius: 12px; padding: clamp(1rem, 2vw, 1.35rem); }
+.form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; align-items: start; }
 .form-grid .full { grid-column: 1 / -1; }
 .checkbox-inline {
   display: inline-flex;
@@ -49,7 +49,7 @@
   font-weight: 600;
   color: var(--text);
 }
-.toolbar { display: flex; gap: 0.7rem; flex-wrap: wrap; }
+.toolbar { display: flex; gap: 0.9rem; flex-wrap: wrap; align-items: end; }
 .toolbar > * { flex: 1 1 180px; }
 
 .landing-hero {
@@ -75,7 +75,7 @@
 .landing-hero h1 span { color: var(--primary); }
 .landing-hero > .landing-grid > div > p { margin-top: 0.75rem; color: #374151; max-width: 52ch; font-size: 1.02rem; }
 
-.search-bar { margin-top: 1rem; border-radius: 12px; padding: 0.8rem; display: grid; grid-template-columns: 2fr 1.2fr 1.2fr auto; gap: 0.55rem; background: #f8fafc; border: 1px solid var(--line); }
+.search-bar { margin-top: 1rem; border-radius: 12px; padding: 1rem; display: grid; grid-template-columns: 2fr 1.2fr 1.2fr auto; gap: 0.85rem; background: #f8fafc; border: 1px solid var(--line); align-items: end; }
 .hero-preview { border-radius: 12px; padding: 1rem; background: #f8fafc; border: 1px solid var(--line); }
 .hero-preview-label { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-secondary); margin-bottom: 0.4rem; }
 .hero-preview-card { margin-top: 0.85rem; border-radius: 12px; padding: 0.85rem; background: #ffffff; color: #475569; border: 1px solid var(--line); }
@@ -83,7 +83,7 @@
 .property-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 1rem; }
 .property-card { border-radius: 12px; overflow: hidden; }
 .property-card img { width: 100%; aspect-ratio: 16 / 9; object-fit: cover; display: block; }
-.property-body { padding: 0.85rem; display: grid; gap: 0.35rem; }
+.property-body { padding: 0.95rem; display: grid; gap: 0.45rem; }
 .property-meta { color: var(--text-secondary); font-size: 0.88rem; }
 
 .nav-actions { margin-top: 0; margin-left: auto; }

@@ -1,6 +1,6 @@
 .dashboard-layout {
-  width: min(1200px, 94vw);
-  margin: 1rem auto 2rem;
+  width: var(--content-width);
+  margin: 1rem auto 2.25rem;
   display: grid;
   grid-template-columns: 250px 1fr;
   gap: 1rem;
@@ -10,16 +10,16 @@
   grid-template-columns: 1fr;
 }
 
-.dashboard-shell { display: grid; gap: 1rem; }
+.dashboard-shell { display: grid; gap: var(--section-gap); }
 .kpi-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
-  gap: 0.9rem;
+  gap: 1rem;
 }
 
 .kpi-card {
   border-radius: 12px;
-  padding: 1rem;
+  padding: 1.1rem;
   background: #ffffff;
   border: 1px solid #e2e8f0;
   box-shadow: var(--shadow);
@@ -68,13 +68,13 @@
   background: #e0e7ff;
   color: #3730a3;
 }
-.dashboard-hero { display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; margin-bottom: 0.7rem; }
-.dashboard-hero p { color: var(--text-secondary); }
+.dashboard-hero { display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; margin-bottom: 0.9rem; }
+.dashboard-hero p { color: var(--text-secondary); line-height: 1.5; margin: 0; }
 .dashboard-actions { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 0.75rem; }
 .dashboard-actions .btn { width: 100%; }
-.data-table-card { background: #ffffff; border: 1px solid var(--line); border-radius: 12px; padding: 0.9rem; box-shadow: var(--shadow); }
+.data-table-card { background: #ffffff; border: 1px solid var(--line); border-radius: 12px; padding: 1rem; box-shadow: var(--shadow); }
 
-.split-grid { display: grid; grid-template-columns: 1.3fr 1fr; gap: 1rem; }
+.split-grid { display: grid; grid-template-columns: 1.3fr 1fr; gap: 1.1rem; align-items: start; }
 .callout { padding: 0.9rem; border-radius: 12px; background: #f8fafc; border: 1px solid var(--line); color: var(--text); box-shadow: var(--shadow); }
 
 .gallery-preview { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 0.7rem; margin-top: 0.7rem; }
@@ -84,7 +84,7 @@
 
 .gallery-placeholder {
   margin: 0;
-  padding: 1rem;
+  padding: 1.1rem;
   border: 1px dashed var(--line);
   border-radius: 12px;
   color: var(--text-secondary);
@@ -95,9 +95,15 @@
 .property-card--tenant img { aspect-ratio: 16 / 9; }
 
 .empty-state {
-  display: grid;
-  justify-items: center;
-  gap: 0.55rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.7rem;
+}
+
+.table-empty-cell {
+  padding: 1rem 0;
 }
 
 .empty-state-icon {

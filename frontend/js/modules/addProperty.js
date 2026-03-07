@@ -31,7 +31,7 @@ function renderSelectedImages() {
         `;
       })
       .join("")
-    : `<p class="gallery-placeholder">Preview grid appears here after you select photos.</p>`;
+    : `<p class="gallery-placeholder">Selected photos will appear here.</p>`;
 }
 
 renderSelectedImages();

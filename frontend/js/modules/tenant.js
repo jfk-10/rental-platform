@@ -71,7 +71,7 @@ async function loadTenantSummary() {
   const picks = city ? rows.filter((item) => item.city?.toLowerCase() === city.toLowerCase()) : rows;
   recommendationBox.innerHTML = picks.length
     ? picks.slice(0, 3).map((item) => `<article class='property-card property-card--tenant'><img src='${item.property_images?.[0]?.image_url || "https://images.unsplash.com/photo-1560185127-6ed189bf02f4?auto=format&fit=crop&w=1400&q=90"}' alt='property'/><div class='property-body'><h4>${item.title || "Untitled"}</h4><p class='property-meta'>${item.city || "-"}</p><p><strong>${formatCurrency(item.rent_amount)}</strong></p><div class='actions-row'><button class='btn btn-secondary saveBtn' data-id='${item.property_id}'>Save</button><a class='btn btn-primary' href='../pages/property-details.html?id=${item.property_id}'>View Details</a></div></div></article>`).join("")
-    : "<div class='empty-state'><span class='empty-state-icon' aria-hidden='true'>🏠</span><h4>No recommendations yet</h4><p>Update your city in profile to unlock better matches.</p><a class='btn btn-primary' href='../pages/property-list.html'>Explore Homes</a></div>";
+    : "<div class='empty-state'><span class='empty-state-icon' aria-hidden='true'>🏠</span><h4>No recommendations yet</h4><p>Add your city in profile to get matching listings.</p><a class='btn btn-primary' href='../pages/property-list.html'>Explore Homes</a></div>";
 }
 
 tenantProfileForm.addEventListener("submit", async (event) => {

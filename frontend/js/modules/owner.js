@@ -75,7 +75,7 @@ async function loadOwnerSummary() {
     propertyCountElement.textContent = "0";
     rentedCountElement.textContent = "0";
     incomeElement.textContent = formatCurrency(0);
-    preview.innerHTML = "<div class='empty-state'><span class='empty-state-icon' aria-hidden='true'>🏢</span><h4>Welcome, owner 👋</h4><p>Get started by adding your first premium property listing.</p><a class='btn btn-primary' href='../pages/add-property.html'>Add Listing</a></div>";
+    preview.innerHTML = "<div class='empty-state'><span class='empty-state-icon' aria-hidden='true'>🏢</span><h4>No listings yet</h4><p>Add your first property to start publishing and tracking performance.</p><a class='btn btn-primary' href='../pages/add-property.html'>Add Property</a></div>";
     return;
   }
 
@@ -90,7 +90,7 @@ async function loadOwnerSummary() {
 
   preview.innerHTML = rows.length
     ? rows.slice(0, 3).map((item) => `<article class='property-card'><img src='${item.property_images?.[0]?.image_url || "https://images.unsplash.com/photo-1494526585095-c41746248156?auto=format&fit=crop&w=900&q=80"}' alt='property'/><div class='property-body'><h4>${item.title || "Untitled"}</h4><p class='property-meta'>${item.city || "-"}</p><p><strong>${formatCurrency(item.rent_amount)}</strong></p></div></article>`).join("")
-    : "<div class='empty-state'><span class='empty-state-icon' aria-hidden='true'>🏢</span><h4>No listings yet</h4><p>Create your first property listing and start receiving tenant interest.</p><a class='btn btn-primary' href='../pages/add-property.html'>Add Listing</a></div>";
+    : "<div class='empty-state'><span class='empty-state-icon' aria-hidden='true'>🏢</span><h4>No listings yet</h4><p>Create a listing to start receiving tenant enquiries.</p><a class='btn btn-primary' href='../pages/add-property.html'>Add Property</a></div>";
 }
 
 ownerProfileForm.addEventListener("submit", async (event) => {

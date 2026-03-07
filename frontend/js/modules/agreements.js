@@ -126,7 +126,7 @@ async function loadAgreementList() {
       `
       )
       .join("")
-    : "<tr><td colspan='7'><div class='empty-state card'><h3>No agreements yet</h3><p>Create a rental agreement to get started.</p></div></td></tr>";
+    : "<tr><td colspan='7' class='table-empty-cell'><div class='empty-state card'><h3>No agreements yet</h3><p>Create an agreement to manage tenancy details.</p><button class='btn btn-primary' type='button' id='refreshAgreements'>Refresh</button></div></td></tr>";
 }
 
 async function requestAgreementEdit(agreementId) {
@@ -267,3 +267,11 @@ adminForm.addEventListener("submit", async (event) => {
 
 loadSelectOptions();
 loadAgreementList();
+
+
+document.addEventListener("click", (event) => {
+  const target = event.target;
+  if (!(target instanceof HTMLButtonElement)) return;
+  if (!(target.id === "refreshAgreements")) return;
+  loadAgreementList()
+});
