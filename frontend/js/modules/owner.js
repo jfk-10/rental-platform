@@ -91,16 +91,23 @@ async function loadOwnerSummary() {
 ownerProfileForm.addEventListener("submit", async (event) => {
   event.preventDefault();
 
+  const userId = Number(localStorage.getItem("userId"));
   const phoneInput = document.getElementById("ownerPhone");
   const addressInput = document.getElementById("ownerAddress");
   const cityInput = document.getElementById("ownerCity");
   const ownerTypeInput = document.getElementById("ownerType");
 
+  if (!Number.isFinite(userId) || userId <= 0) {
+    console.error("Owner profile save error: invalid user ID", { userId });
+    showToast("Unable to identify your account. Please log in again.", "error");
+    return;
+  }
+
   const payload = {
     phone: phoneInput.value.trim(),
     address: addressInput.value.trim(),
     city: cityInput.value.trim(),
-    owner_type: ownerTypeInput.value
+    owner_type: ownerTypeInput.value.trim()
   };
 
   if (!payload.phone || !payload.address || !payload.city || !payload.owner_type) {
@@ -108,7 +115,7 @@ ownerProfileForm.addEventListener("submit", async (event) => {
     return;
   }
 
-  const { data, error } = await saveOwnerProfile(user.user_id, payload);
+  const { data, error } = await saveOwnerProfile(userId, payload);
   if (error) {
     showToast(`Profile update failed: ${error.message || "unknown error"}`, "error");
     return;
