@@ -31,8 +31,10 @@ function renderSelectedImages() {
         `;
       })
       .join("")
-    : "";
+    : `<p class="gallery-placeholder">Preview grid appears here after you select photos.</p>`;
 }
+
+renderSelectedImages();
 
 imageInput.addEventListener("change", (event) => {
   const files = Array.from(event.target.files || []);
@@ -58,8 +60,8 @@ form.addEventListener("submit", async (event) => {
     area_sqft: Number(document.getElementById("areaSqft").value || 0),
     bedrooms: Number(document.getElementById("bedrooms").value || 0),
     bathrooms: Number(document.getElementById("bathrooms").value || 0),
-    office_rooms: Number(document.getElementById("officeRooms").value || 0),
-    shop_units: Number(document.getElementById("shopUnits").value || 0),
+    office_rooms: 0,
+    shop_units: 0,
     rent_amount: Number(document.getElementById("rent").value || 0),
     allowed_usage: document.getElementById("allowedUsage").value.trim(),
     status: document.getElementById("status").value
@@ -101,7 +103,7 @@ form.addEventListener("submit", async (event) => {
   showToast("Property published successfully", "success");
   form.reset();
   selectedImages = [];
-  galleryPreview.innerHTML = "";
+  renderSelectedImages();
   submitBtn.disabled = false;
   submitBtn.textContent = "Publish Property";
 });
