@@ -82,7 +82,7 @@ async function loadMaintenanceList() {
       `
       )
       .join("")
-    : "<tr><td colspan='9'>No maintenance requests found.</td></tr>";
+    : "<tr><td colspan='9' class='table-empty-cell'><div class='empty-state'><h3>No maintenance requests</h3><p>Submit a request to start tracking maintenance updates.</p><button class='btn btn-primary' type='button' id='refreshMaintenance'>Refresh</button></div></td></tr>";
 }
 
 requestForm.addEventListener("submit", async (event) => {
@@ -134,3 +134,11 @@ requestTableBody.addEventListener("click", async (event) => {
 
 loadAgreementOptionsForTenant();
 loadMaintenanceList();
+
+
+document.addEventListener("click", (event) => {
+  const target = event.target;
+  if (!(target instanceof HTMLButtonElement)) return;
+  if (!(target.id === "refreshMaintenance")) return;
+  loadMaintenanceList()
+});

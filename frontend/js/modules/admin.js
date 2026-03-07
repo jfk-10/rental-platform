@@ -37,12 +37,20 @@ async function loadAdminSummary() {
   const userTableBody = document.getElementById("userTableBody");
   userTableBody.innerHTML = rowsUsers.length
     ? rowsUsers.map((row) => `<tr><td>${row.user_id}</td><td>${row.name || "-"}</td><td>${row.email || "-"}</td><td><span class='${roleClass(row.role)}'>${row.role || "-"}</span></td></tr>`).join("")
-    : "<tr><td colspan='4'>No users found.</td></tr>";
+    : "<tr><td colspan='4' class='table-empty-cell'><div class='empty-state'><h3>No users found</h3><p>User records will appear here once accounts are created.</p><button class='btn btn-primary' type='button' id='refreshUsers'>Refresh</button></div></td></tr>";
 
   const propertyOverviewBody = document.getElementById("propertyOverviewBody");
   propertyOverviewBody.innerHTML = rowsProperties.length
     ? rowsProperties.slice(0, 10).map((row) => `<tr><td>${row.property_id}</td><td>${row.title || "-"}</td><td>${row.city || "-"}</td><td><span class='${statusClass(row.status)}'>${row.status || "-"}</span></td><td>${row.rent_amount || 0}</td></tr>`).join("")
-    : "<tr><td colspan='5'>No properties found.</td></tr>";
+    : "<tr><td colspan='5' class='table-empty-cell'><div class='empty-state'><h3>No properties found</h3><p>Property records will appear here when listings are available.</p><button class='btn btn-primary' type='button' id='refreshAdminProperties'>Refresh</button></div></td></tr>";
 }
 
 loadAdminSummary();
+
+
+document.addEventListener("click", (event) => {
+  const target = event.target;
+  if (!(target instanceof HTMLButtonElement)) return;
+  if (!(target.id === "refreshUsers" || target.id === "refreshAdminProperties")) return;
+  loadAdminSummary()
+});

@@ -52,9 +52,9 @@ function renderCards(properties) {
     const addPropertyHref = user.role === "owner" ? "./add-property.html" : "../dashboards/owner.html";
     propertyCards.innerHTML = `
       <div class='empty-state card'>
-        <h3>No properties yet</h3>
-        <p>You haven't added any property listings.</p>
-        ${user.role === "owner" ? `<a class='btn btn-primary' href='${addPropertyHref}'>Add Property</a>` : ""}
+        <h3>No properties found</h3>
+        <p>Adjust your filters or add a property to continue.</p>
+        ${user.role === "owner" ? `<a class='btn btn-primary' href='${addPropertyHref}'>Add Property</a>` : `<button class='btn btn-primary' type='button' id='resetPropertyFilters'>Reset Filters</button>`}
       </div>
     `;
     return;
@@ -128,6 +128,13 @@ searchBtn.addEventListener("click", fetchProperties);
 propertyCards.addEventListener("click", async (event) => {
   const target = event.target;
   if (!(target instanceof HTMLButtonElement)) return;
+
+  if (target.id === "resetPropertyFilters") {
+    cityFilter.value = "";
+    statusFilter.value = "";
+    fetchProperties();
+    return;
+  }
 
   const propertyId = Number(target.dataset.id);
   if (!propertyId) return;

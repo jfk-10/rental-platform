@@ -70,7 +70,7 @@ async function loadPaymentList() {
       `
       )
       .join("")
-    : "<tr><td colspan='8'>No payments found.</td></tr>";
+    : "<tr><td colspan='8' class='table-empty-cell'><div class='empty-state'><h3>No payments found</h3><p>Recorded rent payments will appear in this table.</p><button class='btn btn-primary' type='button' id='refreshPayments'>Refresh</button></div></td></tr>";
 }
 
 paymentForm.addEventListener("submit", async (event) => {
@@ -99,3 +99,11 @@ paymentForm.addEventListener("submit", async (event) => {
 
 loadAgreementOptions();
 loadPaymentList();
+
+
+document.addEventListener("click", (event) => {
+  const target = event.target;
+  if (!(target instanceof HTMLButtonElement)) return;
+  if (!(target.id === "refreshPayments")) return;
+  loadPaymentList()
+});
