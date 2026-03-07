@@ -9,7 +9,7 @@ function logoutUser() {
   localStorage.removeItem("name");
 
   // Set flash message for login page
-  setFlashMessage("Logged out successfully", "success", "auth");
+  setFlashMessage("Logout successful", "success", "auth");
 
   // Redirect to login
   window.location.href = "../pages/login.html";

@@ -92,13 +92,13 @@ tenantProfileForm.addEventListener("submit", async (event) => {
 
   const { data, error } = await saveTenantProfile(user.user_id, payload);
   if (error) {
-    showToast(`Profile update failed: ${error.message || "unknown error"}`, "error");
+    showToast("Failed to update profile", "error");
     return;
   }
 
   setProfileStatus(Boolean(data));
   toggleTenantProfileForm(!data);
-  showToast("Tenant profile updated", "success");
+  showToast("Profile updated successfully", "success");
   loadTenantSummary();
 });
 

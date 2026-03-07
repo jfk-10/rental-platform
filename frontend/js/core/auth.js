@@ -21,7 +21,7 @@ export function requireUser(allowedRoles = []) {
   }
 
   if (allowedRoles.length > 0 && !allowedRoles.includes(user.role)) {
-    alert("Access denied");
+    setFlashMessage("Access denied", "error", "auth");
     window.location.href = "../pages/login.html";
     return null;
   }
@@ -30,7 +30,7 @@ export function requireUser(allowedRoles = []) {
 }
 
 export function logout() {
-  setFlashMessage("Logged out successfully", "success", "auth");
+  setFlashMessage("Logout successful", "success", "auth");
 
   localStorage.removeItem("user");
   localStorage.removeItem("userId");

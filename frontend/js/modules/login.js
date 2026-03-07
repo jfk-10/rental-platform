@@ -8,18 +8,18 @@ function getFriendlyAuthError(error) {
   const message = (error?.message || "").toLowerCase();
 
   if (!navigator.onLine) {
-    return "No internet connection detected. Please reconnect and try again.";
+    return "No internet connection";
   }
 
   if (message.includes("timed out") || message.includes("timeout")) {
-    return "Login request took too long on this network. Please try again.";
+    return "Login request timed out";
   }
 
   if (message.includes("failed to fetch") || message.includes("network") || message.includes("cors")) {
-    return "Unable to reach the server from this device. Check mobile network/firewall settings and retry.";
+    return "Unable to reach server";
   }
 
-  return `Login failed: ${error?.message || "unknown error"}`;
+  return "Login failed. Please try again";
 }
 
 async function findUserByEmailAndPassword(email, password) {

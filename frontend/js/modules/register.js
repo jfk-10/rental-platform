@@ -7,18 +7,18 @@ function getFriendlyRegisterError(error) {
   const message = (error?.message || "").toLowerCase();
 
   if (!navigator.onLine) {
-    return "No internet connection detected. Please reconnect and try again.";
+    return "No internet connection";
   }
 
   if (message.includes("timed out") || message.includes("timeout")) {
-    return "Registration request took too long on this network. Please try again.";
+    return "Registration request timed out";
   }
 
   if (message.includes("failed to fetch") || message.includes("network") || message.includes("cors")) {
-    return "Unable to reach the server from this device. Check mobile network/firewall settings and retry.";
+    return "Unable to reach server";
   }
 
-  return `Registration failed: ${error?.message || "unknown error"}`;
+  return "Registration failed. Please try again";
 }
 
 async function createUser(payload) {
@@ -57,6 +57,6 @@ form.addEventListener("submit", async (event) => {
     return;
   }
 
-  setFlashMessage("Registered successfully. Complete your profile after login.", "success", "auth");
+  setFlashMessage("Registration successful", "success", "auth");
   window.location.href = "./login.html";
 });

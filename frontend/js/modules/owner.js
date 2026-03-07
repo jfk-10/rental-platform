@@ -1,5 +1,5 @@
 import { requireUser } from "../core/auth.js";
-import { renderFlashMessage, showToast, formatCurrency, displaySuccessMessage } from "../utils/helpers.js";
+import { renderFlashMessage, showToast, formatCurrency } from "../utils/helpers.js";
 import { validatePropertyPayload } from "../utils/validators.js";
 import { getOwnerByUserId, saveOwnerProfile } from "../services/userService.js";
 import { createProperty, getPropertiesByOwner, uploadPropertyImage } from "../services/propertyService.js";
@@ -122,12 +122,12 @@ ownerProfileForm.addEventListener("submit", async (event) => {
 
   const { data, error } = await saveOwnerProfile(userId, payload);
   if (error) {
-    showToast(`Profile update failed: ${error.message || "unknown error"}`, "error");
+    showToast("Failed to update profile", "error");
     return;
   }
 
   setProfileStatus(isOwnerProfileComplete(data));
-  displaySuccessMessage("Profile saved successfully");
+  showToast("Profile updated successfully", "success");
   loadOwnerSummary();
 });
 
@@ -181,7 +181,7 @@ ownerQuickPropertyForm.addEventListener("submit", async (event) => {
 
   const { data, error } = await createProperty(payload);
   if (error || !data?.property_id) {
-    showToast("Failed to add property", "error");
+    showToast("Failed to create property", "error");
     submitBtn.disabled = false;
     submitBtn.textContent = "Publish Property";
     return;
@@ -194,7 +194,7 @@ ownerQuickPropertyForm.addEventListener("submit", async (event) => {
     }
   }
 
-  showToast("Property published successfully", "success");
+  showToast("Property added successfully", "success");
   ownerQuickPropertyForm.reset();
   selectedQuickImages = [];
   ownerQuickGalleryPreview.innerHTML = "";

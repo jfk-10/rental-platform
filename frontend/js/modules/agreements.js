@@ -50,7 +50,7 @@ async function loadSelectOptions() {
 
   if (propertyError || tenantError) {
     console.error(propertyError || tenantError);
-    alert("Failed to load agreement options");
+    showToast("Failed to load agreement options", "error");
     return;
   }
 
@@ -104,7 +104,7 @@ async function loadAgreementList() {
   const { data, error } = await listAgreements();
   if (error) {
     console.error(error);
-    alert("Failed to fetch agreements");
+    showToast("Failed to fetch agreements", "error");
     return;
   }
 
@@ -167,7 +167,7 @@ async function requestAgreementEdit(agreementId) {
     return;
   }
 
-  showToast("Agreement updated", "success");
+    showToast("Agreement updated successfully", "success");
   loadAgreementList();
 }
 
@@ -212,7 +212,7 @@ async function handleDeleteAgreement(agreementId) {
     return;
   }
 
-  showToast("Agreement deleted", "success");
+  showToast("Agreement terminated successfully", "success");
   loadAgreementList();
 }
 
@@ -227,9 +227,10 @@ agreementTableBody.addEventListener("click", async (event) => {
     const { error } = await updateAgreementStatus(id, "Completed");
     if (error) {
       console.error(error);
-      alert("Failed to update status");
+      showToast("Failed to update agreement", "error");
       return;
     }
+    showToast("Agreement terminated successfully", "success");
     loadAgreementList();
   }
 
@@ -256,11 +257,11 @@ adminForm.addEventListener("submit", async (event) => {
 
   if (error) {
     console.error(error);
-    alert("Failed to create agreement");
+    showToast("Failed to create agreement", "error");
     return;
   }
 
-  alert("Agreement created");
+  showToast("Agreement created successfully", "success");
   adminForm.reset();
   loadAgreementList();
 });

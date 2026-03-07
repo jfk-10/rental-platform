@@ -87,7 +87,7 @@ form.addEventListener("submit", async (event) => {
 
   const { data, error } = await createProperty(payload);
   if (error || !data) {
-    showToast("Failed to add property", "error");
+    showToast("Failed to create property", "error");
     submitBtn.disabled = false;
     submitBtn.textContent = "Publish Property";
     return;
@@ -100,7 +100,7 @@ form.addEventListener("submit", async (event) => {
     }
   }
 
-  showToast("Property published successfully", "success");
+  showToast("Property added successfully", "success");
   form.reset();
   selectedImages = [];
   renderSelectedImages();

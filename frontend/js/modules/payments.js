@@ -1,7 +1,7 @@
 import { requireUser } from "../core/auth.js";
 import { listAgreements } from "../services/agreementService.js";
 import { createPayment, listPayments } from "../services/paymentService.js";
-import { formatCurrency, formatDate } from "../utils/helpers.js";
+import { formatCurrency, formatDate, showToast } from "../utils/helpers.js";
 
 const user = requireUser(["admin", "owner", "tenant"]);
 if (!user) throw new Error("Unauthorized");
@@ -20,7 +20,7 @@ async function loadAgreementOptions() {
   const { data, error } = await listAgreements();
   if (error) {
     console.error(error);
-    alert("Failed to load agreements");
+    showToast("Failed to load agreements", "error");
     return;
   }
 
@@ -41,7 +41,7 @@ async function loadPaymentList() {
   const { data, error } = await listPayments();
   if (error) {
     console.error(error);
-    alert("Failed to fetch payments");
+    showToast("Failed to fetch payments", "error");
     return;
   }
 
@@ -85,14 +85,19 @@ paymentForm.addEventListener("submit", async (event) => {
     payment_status: document.getElementById("paymentStatus").value
   };
 
-  const { error } = await createPayment(payload);
-  if (error) {
-    console.error(error);
-    alert("Payment creation failed");
+  if (!payload.agreement_id || !payload.payment_month || !payload.payment_date || !payload.payment_mode || !payload.payment_status || payload.amount_paid <= 0) {
+    showToast("Please fill all payment fields", "error");
     return;
   }
 
-  alert("Payment recorded");
+  const { error } = await createPayment(payload);
+  if (error) {
+    console.error(error);
+    showToast("Failed to record payment", "error");
+    return;
+  }
+
+  showToast("Payment recorded successfully", "success");
   paymentForm.reset();
   loadPaymentList();
 });

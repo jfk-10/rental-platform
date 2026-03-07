@@ -95,10 +95,10 @@ async function handleDelete(propertyId) {
   if (!confirm("Are you sure you want to delete this property?")) return;
   const { error } = await deleteProperty(propertyId);
   if (error) {
-    showToast("Delete failed", "error");
+    showToast("Failed to delete property", "error");
     return;
   }
-  showToast("Property deleted", "success");
+  showToast("Property deleted successfully", "success");
   fetchProperties();
 }
 
@@ -117,10 +117,10 @@ async function handleEdit(propertyId) {
   });
 
   if (error) {
-    showToast("Update failed", "error");
+    showToast("Failed to update property", "error");
     return;
   }
-  showToast("Property updated", "success");
+  showToast("Property updated successfully", "success");
   fetchProperties();
 }
 

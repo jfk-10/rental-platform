@@ -5,7 +5,7 @@ import {
   saveOwnerProfile,
   saveTenantProfile
 } from "../services/userService.js";
-import { displaySuccessMessage, showToast } from "../utils/helpers.js";
+import { showToast } from "../utils/helpers.js";
 
 const user = requireUser(["admin", "owner", "tenant"]);
 if (!user) throw new Error("Unauthorized");
@@ -193,7 +193,7 @@ async function saveProfile() {
 
     const { data, error } = await saveOwnerProfile(user.user_id, payload);
     if (error) {
-      showToast(error.message || "Unable to save owner profile", "error");
+      showToast("Failed to update profile", "error");
       return false;
     }
 
@@ -217,7 +217,7 @@ async function saveProfile() {
 
     const { data, error } = await saveTenantProfile(user.user_id, payload);
     if (error) {
-      showToast(error.message || "Unable to save tenant profile", "error");
+      showToast("Failed to update profile", "error");
       return false;
     }
 
@@ -237,7 +237,7 @@ editProfileBtn.addEventListener("click", async () => {
   const saved = await saveProfile();
   if (!saved) return;
 
-  displaySuccessMessage("Profile saved successfully");
+  showToast("Profile updated successfully", "success");
   toggleEditMode(false);
 });
 

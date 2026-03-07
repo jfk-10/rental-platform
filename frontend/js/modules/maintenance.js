@@ -1,7 +1,7 @@
 import { requireUser } from "../core/auth.js";
 import { listAgreements } from "../services/agreementService.js";
 import { createMaintenanceRequest, listMaintenanceRequests, updateMaintenanceRequest } from "../services/maintenanceService.js";
-import { formatCurrency, formatDate } from "../utils/helpers.js";
+import { formatCurrency, formatDate, showToast } from "../utils/helpers.js";
 
 const user = requireUser(["admin", "owner", "tenant"]);
 if (!user) throw new Error("Unauthorized");
@@ -19,7 +19,7 @@ async function loadAgreementOptionsForTenant() {
   const { data, error } = await listAgreements();
   if (error) {
     console.error(error);
-    alert("Failed to load agreements");
+    showToast("Failed to load agreements", "error");
     return;
   }
 
@@ -58,7 +58,7 @@ async function loadMaintenanceList() {
   const { data, error } = await listMaintenanceRequests();
   if (error) {
     console.error(error);
-    alert("Failed to fetch maintenance requests");
+    showToast("Failed to fetch maintenance requests", "error");
     return;
   }
 
@@ -97,14 +97,19 @@ requestForm.addEventListener("submit", async (event) => {
     cost_estimate: Number(document.getElementById("costEstimate").value || 0)
   };
 
-  const { error } = await createMaintenanceRequest(payload);
-  if (error) {
-    console.error(error);
-    alert("Failed to create request");
+  if (!payload.agreement_id || !payload.issue_type || !payload.description || !payload.request_date) {
+    showToast("Please fill all maintenance fields", "error");
     return;
   }
 
-  alert("Maintenance request submitted");
+  const { error } = await createMaintenanceRequest(payload);
+  if (error) {
+    console.error(error);
+    showToast("Failed to submit maintenance request", "error");
+    return;
+  }
+
+  showToast("Maintenance request submitted", "success");
   requestForm.reset();
   loadMaintenanceList();
 });
@@ -125,10 +130,11 @@ requestTableBody.addEventListener("click", async (event) => {
 
   if (error) {
     console.error(error);
-    alert("Failed to update request");
+    showToast("Failed to update maintenance request", "error");
     return;
   }
 
+  showToast("Maintenance request updated", "success");
   loadMaintenanceList();
 });
 
