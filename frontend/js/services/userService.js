@@ -13,11 +13,13 @@ export async function getTenants() {
 }
 
 export async function getOwnerByUserId(userId) {
+  const parsedUserId = Number(userId);
+
   return supabaseClient
     .from("owners")
     .select("owner_id,user_id,phone,address,city,owner_type")
-    .eq("user_id", userId)
-    .single();
+    .eq("user_id", parsedUserId)
+    .maybeSingle();
 }
 
 export async function getTenantByUserId(userId) {
@@ -36,10 +38,12 @@ export async function getAllUsers() {
 }
 
 export async function saveOwnerProfile(userId, payload) {
+  const parsedUserId = Number(userId);
+
   const { data, error } = await supabaseClient
     .from("owners")
     .upsert({
-      user_id: userId,
+      user_id: parsedUserId,
       phone: payload.phone,
       owner_type: payload.owner_type,
       city: payload.city,
