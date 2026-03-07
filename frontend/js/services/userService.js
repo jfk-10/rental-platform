@@ -36,39 +36,49 @@ export async function getAllUsers() {
 }
 
 export async function saveOwnerProfile(userId, payload) {
-  const existing = await getOwnerByUserId(userId);
-
-  if (existing.data) {
-    return supabaseClient
-      .from("owners")
-      .update(payload)
-      .eq("user_id", userId)
-      .select("owner_id,user_id,phone,address,city,owner_type")
-      .single();
-  }
-
-  return supabaseClient
+  const response = await supabaseClient
     .from("owners")
-    .insert([{ user_id: userId, ...payload }])
+    .update({
+      phone: payload.phone,
+      aadhaar_no: payload.aadhaar_no,
+      owner_type: payload.owner_type,
+      city: payload.city,
+      address: payload.address
+    })
+    .eq("user_id", userId)
     .select("owner_id,user_id,phone,address,city,owner_type")
     .single();
+
+  if (response.error) {
+    return {
+      data: null,
+      error: new Error("We couldn't save your owner profile right now. Please check your details and try again.")
+    };
+  }
+
+  return response;
 }
 
 export async function saveTenantProfile(userId, payload) {
-  const existing = await getTenantByUserId(userId);
-
-  if (existing.data) {
-    return supabaseClient
-      .from("tenants")
-      .update(payload)
-      .eq("user_id", userId)
-      .select("tenant_id,user_id,phone,aadhaar_no,occupation,permanent_address,city")
-      .single();
-  }
-
-  return supabaseClient
+  const response = await supabaseClient
     .from("tenants")
-    .insert([{ user_id: userId, ...payload }])
+    .update({
+      phone: payload.phone,
+      aadhaar_no: payload.aadhaar_no,
+      occupation: payload.occupation,
+      city: payload.city,
+      permanent_address: payload.permanent_address
+    })
+    .eq("user_id", userId)
     .select("tenant_id,user_id,phone,aadhaar_no,occupation,permanent_address,city")
     .single();
+
+  if (response.error) {
+    return {
+      data: null,
+      error: new Error("We couldn't save your tenant profile right now. Please check your details and try again.")
+    };
+  }
+
+  return response;
 }
