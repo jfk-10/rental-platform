@@ -15,21 +15,27 @@
     <section class="page-card">
       <h1 class="section-title">Discover properties</h1>
       <p class="section-subtitle">Search by city, status, and budget to see active listings.</p>
-      <div class="search-bar shell-panel">
-        <div>
-          <label for="homeCity">City</label>
-          <input id="homeCity" type="text" />
+      <div class="search-bar shell-panel discover-filter-card">
+        <div class="discover-filter-head">
+          <h3>Filter listings</h3>
+          <p>Narrow your search to find homes that match your needs.</p>
         </div>
-        <div>
-          <label for="homeStatus">Status</label>
-          <select id="homeStatus"><option value="">Any status</option><option value="Available">Available</option><option value="Rented">Rented</option></select>
-        </div>
-        <div>
-          <label for="homeBudget">Budget (Max)</label>
-          <input id="homeBudget" type="number" />
-        </div>
-        <div class="toolbar-action-wrap">
-          <button id="homeSearch" class="btn btn-primary" type="button">Search</button>
+        <div class="discover-filter-grid">
+          <div>
+            <label for="homeCity">City</label>
+            <input id="homeCity" type="text" placeholder="e.g. Nairobi" />
+          </div>
+          <div>
+            <label for="homeStatus">Status</label>
+            <select id="homeStatus"><option value="">Any status</option><option value="Available">Available</option><option value="Rented">Rented</option></select>
+          </div>
+          <div>
+            <label for="homeBudget">Budget (Max)</label>
+            <input id="homeBudget" type="number" placeholder="e.g. 1200" />
+          </div>
+          <div class="toolbar-action-wrap">
+            <button id="homeSearch" class="btn btn-primary" type="button">Search listings</button>
+          </div>
         </div>
       </div>
     </section>

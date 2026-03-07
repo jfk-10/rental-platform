@@ -192,6 +192,11 @@ tbody tr:hover { background: #f8fafc; transition: background-color 0.2s ease; }
   line-height: 1.5;
 }
 
+.empty-state-icon {
+  font-size: 1.5rem;
+  line-height: 1;
+}
+
 .empty-state .btn {
   margin-top: 0.3rem;
 }

@@ -42,7 +42,7 @@ function renderLocationChips(properties) {
   const topCities = Object.entries(countByCity).sort((a, b) => b[1] - a[1]).slice(0, 8);
   popularLocations.innerHTML = topCities.length
     ? topCities.map(([city, count]) => `<span class="role-chip">${city} • ${count} homes</span>`).join("")
-    : "<div class='empty-state'><h4>No locations available</h4><p>Listings by city will appear here when inventory is available.</p><a class='btn btn-primary' href='./discover.html'>Refresh Results</a></div>";
+    : "<div class='empty-state'><p class='empty-state-icon' aria-hidden='true'>📍</p><h4>No locations available</h4><p>Listings by city will appear here when inventory is available.</p><a class='btn btn-primary' href='./discover.html'>Refresh Results</a></div>";
 }
 
 async function loadHomeListings() {
@@ -62,12 +62,12 @@ async function loadHomeListings() {
 
   if (recommendedGrid) {
     const recommended = properties.filter((p) => p.status === "Available").slice(0, 8);
-    recommendedGrid.innerHTML = recommended.length ? recommended.map(renderPropertyCard).join("") : "<div class='empty-state'><h4>No matching properties</h4><p>Update search filters to view available listings.</p><button class='btn btn-primary' type='button' id='retryDiscoverSearch'>Search Again</button></div>";
+    recommendedGrid.innerHTML = recommended.length ? recommended.map(renderPropertyCard).join("") : "<div class='empty-state'><p class='empty-state-icon' aria-hidden='true'>🔍</p><h4>No matching properties</h4><p>Update search filters to view available listings.</p><button class='btn btn-primary' type='button' id='retryDiscoverSearch'>Search Again</button></div>";
   }
 
   if (newHomesGrid) {
     const newHomes = [...properties].slice(0, 6);
-    newHomesGrid.innerHTML = newHomes.length ? newHomes.map(renderPropertyCard).join("") : "<div class='empty-state'><h4>No new homes yet</h4><p>Recently added listings will appear here.</p><button class='btn btn-primary' type='button' id='refreshNewHomes'>Refresh</button></div>";
+    newHomesGrid.innerHTML = newHomes.length ? newHomes.map(renderPropertyCard).join("") : "<div class='empty-state'><p class='empty-state-icon' aria-hidden='true'>🏘️</p><h4>No new homes yet</h4><p>Recently added listings will appear here.</p><button class='btn btn-primary' type='button' id='refreshNewHomes'>Refresh</button></div>";
   }
 }
 
