@@ -85,16 +85,41 @@ export async function saveTenantProfile(userId, payload) {
   const city = String(payload.city ?? "").trim();
   const address = String(payload.permanent_address ?? "").trim();
 
-  const { data, error } = await supabaseClient
+  const { data: existingTenant, error: findError } = await supabaseClient
     .from("tenants")
-    .upsert({
-      user_id: parsedUserId,
-      phone,
-      aadhaar_no: aadhaarNo,
-      occupation,
-      city,
-      permanent_address: address
-    }, { onConflict: "user_id" })
+    .select("tenant_id")
+    .eq("user_id", parsedUserId)
+    .maybeSingle();
+
+  if (findError) {
+    console.error("Tenant profile save error:", findError);
+    return {
+      data: null,
+      error: new Error("We couldn't save your tenant profile right now. Please check your details and try again.")
+    };
+  }
+
+  const tenantPayload = {
+    phone,
+    aadhaar_no: aadhaarNo,
+    occupation,
+    city,
+    permanent_address: address
+  };
+
+  const saveQuery = existingTenant
+    ? supabaseClient
+      .from("tenants")
+      .update(tenantPayload)
+      .eq("user_id", parsedUserId)
+    : supabaseClient
+      .from("tenants")
+      .insert({
+        user_id: parsedUserId,
+        ...tenantPayload
+      });
+
+  const { data, error } = await saveQuery
     .select("tenant_id,user_id,phone,aadhaar_no,occupation,permanent_address,city")
     .maybeSingle();
 
@@ -109,11 +134,7 @@ export async function saveTenantProfile(userId, payload) {
   return {
     data: data || {
       user_id: parsedUserId,
-      phone,
-      aadhaar_no: aadhaarNo,
-      occupation,
-      city,
-      permanent_address: address
+      ...tenantPayload
     },
     error: null
   };
