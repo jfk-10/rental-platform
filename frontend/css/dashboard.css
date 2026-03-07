@@ -82,6 +82,16 @@
 .gallery-item img { width: 100%; aspect-ratio: 16 / 9; object-fit: cover; display: block; }
 .gallery-delete { position: absolute; top: 0.45rem; right: 0.45rem; border: 1px solid #fecaca; background: rgba(255,255,255,0.95); color: #b91c1c; border-radius: 999px; width: 30px; height: 30px; cursor: pointer; }
 
+.gallery-placeholder {
+  margin: 0;
+  padding: 1rem;
+  border: 1px dashed var(--line);
+  border-radius: 12px;
+  color: var(--text-secondary);
+  text-align: center;
+  background: #ffffff;
+}
+
 .property-card--tenant img { aspect-ratio: 16 / 9; }
 
 .empty-state {
