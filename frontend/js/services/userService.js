@@ -23,10 +23,12 @@ export async function getOwnerByUserId(userId) {
 }
 
 export async function getTenantByUserId(userId) {
+  const parsedUserId = Number(userId);
+
   return supabaseClient
     .from("tenants")
     .select("tenant_id,user_id,phone,aadhaar_no,occupation,permanent_address,city")
-    .eq("user_id", userId)
+    .eq("user_id", parsedUserId)
     .maybeSingle();
 }
 
@@ -76,25 +78,43 @@ export async function saveOwnerProfile(userId, payload) {
 }
 
 export async function saveTenantProfile(userId, payload) {
-  const response = await supabaseClient
-    .from("tenants")
-    .update({
-      phone: payload.phone,
-      aadhaar_no: payload.aadhaar_no,
-      occupation: payload.occupation,
-      city: payload.city,
-      permanent_address: payload.permanent_address
-    })
-    .eq("user_id", userId)
-    .select("tenant_id,user_id,phone,aadhaar_no,occupation,permanent_address,city")
-    .single();
+  const parsedUserId = Number(userId);
+  const phone = String(payload.phone ?? "").trim();
+  const aadhaarNo = String(payload.aadhaar_no ?? "").trim();
+  const occupation = String(payload.occupation ?? "").trim();
+  const city = String(payload.city ?? "").trim();
+  const address = String(payload.permanent_address ?? "").trim();
 
-  if (response.error) {
+  const { data, error } = await supabaseClient
+    .from("tenants")
+    .upsert({
+      user_id: parsedUserId,
+      phone,
+      aadhaar_no: aadhaarNo,
+      occupation,
+      city,
+      permanent_address: address
+    }, { onConflict: "user_id" })
+    .select("tenant_id,user_id,phone,aadhaar_no,occupation,permanent_address,city")
+    .maybeSingle();
+
+  if (error) {
+    console.error("Tenant profile save error:", error);
     return {
       data: null,
       error: new Error("We couldn't save your tenant profile right now. Please check your details and try again.")
     };
   }
 
-  return response;
+  return {
+    data: data || {
+      user_id: parsedUserId,
+      phone,
+      aadhaar_no: aadhaarNo,
+      occupation,
+      city,
+      permanent_address: address
+    },
+    error: null
+  };
 }

@@ -10,6 +10,7 @@ renderFlashMessage("dashboard");
 
 const tenantProfileForm = document.getElementById("tenantProfileForm");
 const tenantProfileStatus = document.getElementById("tenantProfileStatus");
+const tenantProfileSection = document.getElementById("tenantProfileSection");
 const recommendationBox = document.getElementById("tenantRecommendations");
 
 function setProfileStatus(isComplete) {
@@ -18,6 +19,9 @@ function setProfileStatus(isComplete) {
 
 function toggleTenantProfileForm(shouldShow) {
   tenantProfileForm.style.display = shouldShow ? "grid" : "none";
+  if (tenantProfileSection) {
+    tenantProfileSection.style.display = shouldShow ? "block" : "none";
+  }
 }
 
 function prefillTenantProfile(profile) {
