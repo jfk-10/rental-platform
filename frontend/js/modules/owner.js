@@ -91,11 +91,16 @@ async function loadOwnerSummary() {
 ownerProfileForm.addEventListener("submit", async (event) => {
   event.preventDefault();
 
+  const phoneInput = document.getElementById("ownerPhone");
+  const addressInput = document.getElementById("ownerAddress");
+  const cityInput = document.getElementById("ownerCity");
+  const ownerTypeInput = document.getElementById("ownerType");
+
   const payload = {
-    phone: document.getElementById("ownerPhone").value.trim(),
-    address: document.getElementById("ownerAddress").value.trim(),
-    city: document.getElementById("ownerCity").value.trim(),
-    owner_type: document.getElementById("ownerType").value
+    phone: phoneInput.value.trim(),
+    address: addressInput.value.trim(),
+    city: cityInput.value.trim(),
+    owner_type: ownerTypeInput.value
   };
 
   if (!payload.phone || !payload.address || !payload.city || !payload.owner_type) {

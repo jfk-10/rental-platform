@@ -39,19 +39,23 @@ export async function getAllUsers() {
 
 export async function saveOwnerProfile(userId, payload) {
   const parsedUserId = Number(userId);
+  const phone = String(payload.phone ?? "").trim();
+  const ownerType = payload.owner_type;
+  const city = String(payload.city ?? "").trim();
+  const address = String(payload.address ?? "").trim();
 
   const { data, error } = await supabaseClient
     .from("owners")
     .upsert({
       user_id: parsedUserId,
-      phone: payload.phone,
-      owner_type: payload.owner_type,
-      city: payload.city,
-      address: payload.address
-    }, { onConflict: "user_id" })
-    .select("owner_id,user_id,phone,address,city,owner_type");
+      phone,
+      owner_type: ownerType,
+      city,
+      address
+    }, { onConflict: "user_id" });
 
   if (error) {
+    console.error("Owner profile save error:", error);
     return {
       data: null,
       error: new Error("We couldn't save your owner profile right now. Please check your details and try again.")
@@ -59,7 +63,13 @@ export async function saveOwnerProfile(userId, payload) {
   }
 
   return {
-    data: data?.[0] || null,
+    data: data?.[0] || {
+      user_id: parsedUserId,
+      phone,
+      owner_type: ownerType,
+      city,
+      address
+    },
     error: null
   };
 }
