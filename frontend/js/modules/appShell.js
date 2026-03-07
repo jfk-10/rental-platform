@@ -85,12 +85,23 @@ function renderUtilityBar() {
       <div class="app-user-actions">
         ${
           user
-            ? `<a class="app-profile-link" href="${prefix}pages/profile.html"><span class="app-avatar" aria-hidden="true">${initials}</span><span class="app-profile-meta"><span>Profile</span><span class="role-chip ${getRoleBadgeClass(role)}">${roleLabel}</span></span></a>`
+            ? `<details class="profile-menu"><summary class="app-profile-link"><span class="app-avatar" aria-hidden="true">${initials}</span><span class="app-profile-meta"><span>Profile</span><span class="role-chip ${getRoleBadgeClass(role)}">${roleLabel}</span></span></summary><div class="profile-dropdown"><a href="${prefix}pages/profile.html">Open Profile</a><button type="button" id="profileLogoutBtn" class="profile-logout">Logout</button></div></details>`
             : `<a class="btn btn-secondary" href="${prefix}pages/login.html">Login</a><a class="btn btn-primary" href="${prefix}pages/register.html">Sign up</a>`
         }
       </div>
     </div>
   `;
+
+  const logoutButton = document.getElementById("profileLogoutBtn");
+  if (logoutButton) {
+    logoutButton.addEventListener("click", () => {
+      localStorage.removeItem("user");
+      localStorage.removeItem("userId");
+      localStorage.removeItem("role");
+      localStorage.removeItem("name");
+      window.location.href = `${prefix}pages/login.html`;
+    });
+  }
 }
 
 renderUtilityBar();

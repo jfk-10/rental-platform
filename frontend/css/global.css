@@ -15,7 +15,7 @@
   --danger: #dc2626;
   --success: #16a34a;
   --line: #e2e8f0;
-  --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  --shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
   --radius-lg: 20px;
   --radius-md: 12px;
 }
@@ -65,7 +65,7 @@ h1, h2, h3, h4 {
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   border-bottom: 1px solid #e2e8f0;
-  background: rgba(248, 250, 252, 0.72);
+  background: rgba(255, 255, 255, 0.8);
 }
 .utility-bar:empty { display: none; }
 .page-shell { width: min(1200px, 94vw); margin: 1rem auto 2rem; }
@@ -166,6 +166,9 @@ tbody tr:hover { background: #f8fafc; transition: background-color 0.2s ease; }
   gap: 0.55rem;
   color: var(--text);
   font-weight: 500;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
 }
 .app-profile-meta {
   display: inline-flex;
@@ -183,6 +186,49 @@ tbody tr:hover { background: #f8fafc; transition: background-color 0.2s ease; }
   color: #475569;
   font-size: 0.8rem;
   font-weight: 700;
+}
+
+.profile-menu {
+  position: relative;
+}
+
+.profile-menu summary {
+  list-style: none;
+}
+
+.profile-menu summary::-webkit-details-marker {
+  display: none;
+}
+
+.profile-dropdown {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 0.5rem);
+  min-width: 185px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: var(--shadow);
+  padding: 0.4rem;
+  display: grid;
+  gap: 0.2rem;
+}
+
+.profile-dropdown a,
+.profile-logout {
+  border: 0;
+  border-radius: 8px;
+  padding: 0.55rem 0.7rem;
+  background: transparent;
+  color: var(--text-muted);
+  text-align: left;
+  font: inherit;
+  cursor: pointer;
+}
+
+.profile-dropdown a:hover,
+.profile-logout:hover {
+  background: #f8fafc;
 }
 
 .status-live {

@@ -55,6 +55,19 @@
   color: #0f172a;
   font-weight: 800;
 }
+
+.metric-card {
+  border-radius: 14px;
+  padding: 1rem;
+  background: linear-gradient(180deg, #fff 0%, #f8fafc 100%);
+  border: 1px solid #e2e8f0;
+  box-shadow: var(--shadow);
+}
+
+.metric-card .kpi-icon {
+  background: #e0e7ff;
+  color: #3730a3;
+}
 .dashboard-hero { display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; margin-bottom: 0.7rem; }
 .dashboard-hero p { color: var(--text-secondary); }
 .dashboard-actions { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 0.75rem; }
@@ -68,6 +81,25 @@
 .gallery-item { position: relative; margin: 0; border-radius: 12px; overflow: hidden; border: 1px solid var(--line); background: #fff; box-shadow: var(--shadow); }
 .gallery-item img { width: 100%; aspect-ratio: 16 / 9; object-fit: cover; display: block; }
 .gallery-delete { position: absolute; top: 0.45rem; right: 0.45rem; border: 1px solid #fecaca; background: rgba(255,255,255,0.95); color: #b91c1c; border-radius: 999px; width: 30px; height: 30px; cursor: pointer; }
+
+.property-card--tenant img { aspect-ratio: 16 / 9; }
+
+.empty-state {
+  display: grid;
+  justify-items: center;
+  gap: 0.55rem;
+}
+
+.empty-state-icon {
+  width: 42px;
+  height: 42px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #e2e8f0;
+  color: #334155;
+}
 
 @media (max-width: 1020px) {
   .dashboard-layout { grid-template-columns: 1fr; }
