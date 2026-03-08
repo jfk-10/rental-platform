@@ -4,84 +4,64 @@ import { setFlashMessage, showToast } from "../utils/helpers.js";
 const form = document.getElementById("registerForm");
 const REGISTRATION_ROLES = ["owner", "tenant"];
 
-function getFriendlyRegisterError(error) {
-  const message = (error?.message || "").toLowerCase();
+if (form) {
+  form.addEventListener("submit", async (event) => {
+    event.preventDefault();
 
-  if (!navigator.onLine) {
-    return "No internet connection";
-  }
+    const name = document.getElementById("name").value.trim();
+    const email = document.getElementById("email").value.trim().toLowerCase();
+    const password = document.getElementById("password").value;
+    const role = document.getElementById("role").value;
 
-  if (message.includes("timed out") || message.includes("timeout")) {
-    return "Registration request timed out";
-  }
+    if (!name || !email || !password || !role) {
+      showToast("Please fill all required fields", "error");
+      return;
+    }
 
-  if (message.includes("failed to fetch") || message.includes("network") || message.includes("cors")) {
-    return "Unable to reach server";
-  }
+    if (!REGISTRATION_ROLES.includes(role)) {
+      showToast("Only owner and tenant accounts can be self-registered", "error");
+      return;
+    }
 
-  return "Registration failed. Please try again";
-}
+    const submitBtn = form.querySelector("button[type='submit']");
+    submitBtn.disabled = true;
+    submitBtn.textContent = "Registering...";
 
-async function createUser(payload) {
-  return supabaseClient.from("users").insert([payload]);
-}
+    const { data, error } = await supabaseClient.auth.signUp({
+      email,
+      password
+    });
 
-form.addEventListener("submit", async (event) => {
-  event.preventDefault();
+    if (error) {
+      submitBtn.disabled = false;
+      submitBtn.textContent = "Register";
+      showToast(error.message || "Registration failed", "error");
+      return;
+    }
 
-  const name = document.getElementById("name").value.trim();
-  const email = document.getElementById("email").value.trim().toLowerCase();
-  const password = document.getElementById("password").value.trim();
-  const role = document.getElementById("role").value;
+    const authUserId = data?.user?.id;
+    if (!authUserId) {
+      submitBtn.disabled = false;
+      submitBtn.textContent = "Register";
+      showToast("Unable to create account. Please try again.", "error");
+      return;
+    }
 
-  if (!name || !email || !password || !role) {
-    showToast("Please fill all required fields", "error");
-    return;
-  }
+    const { error: profileError } = await supabaseClient.from("users").insert({
+      user_id: authUserId,
+      name,
+      email,
+      role
+    });
 
-  if (!REGISTRATION_ROLES.includes(role)) {
-    showToast("Only owner and tenant accounts can be self-registered", "error");
-    return;
-  }
+    if (profileError) {
+      submitBtn.disabled = false;
+      submitBtn.textContent = "Register";
+      showToast(profileError.message || "Profile setup failed", "error");
+      return;
+    }
 
-  const submitBtn = form.querySelector("button[type='submit']");
-  submitBtn.disabled = true;
-  submitBtn.textContent = "Registering...";
-
-  const { data: authData, error: authError } = await supabaseClient.auth.signUp({
-    email,
-    password
+    setFlashMessage("Registration successful", "success", "auth");
+    window.location.href = "/pages/login.html";
   });
-
-  if (authError) {
-    submitBtn.disabled = false;
-    submitBtn.textContent = "Register";
-    showToast(getFriendlyRegisterError(authError), "error");
-    return;
-  }
-
-  const authUserId = authData?.user?.id;
-  if (!authUserId) {
-    submitBtn.disabled = false;
-    submitBtn.textContent = "Register";
-    showToast("Unable to create your account. Please try again.", "error");
-    return;
-  }
-
-  let result = await createUser({ user_id: authUserId, name, email, role });
-  if (result.error && navigator.onLine) {
-    result = await createUser({ user_id: authUserId, name, email, role });
-  }
-
-  if (result.error) {
-    console.error("Registration failed", result.error);
-    await supabaseClient.auth.signOut();
-    submitBtn.disabled = false;
-    submitBtn.textContent = "Register";
-    showToast(getFriendlyRegisterError(result.error), "error");
-    return;
-  }
-
-  setFlashMessage("Registration successful", "success", "auth");
-  window.location.href = "./login.html";
-});
+}

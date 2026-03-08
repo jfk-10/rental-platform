@@ -4,51 +4,26 @@ import { renderFlashMessage, setFlashMessage, showToast } from "../utils/helpers
 const form = document.getElementById("loginForm");
 renderFlashMessage("auth");
 
-function getFriendlyAuthError(error) {
-  const message = (error?.message || "").toLowerCase();
-
-  if (!navigator.onLine) return "No internet connection";
-  if (message.includes("invalid login credentials")) return "Invalid email or password";
-  if (message.includes("email not confirmed")) return "Please confirm your email before logging in";
-  if (message.includes("timed out") || message.includes("timeout")) return "Login request timed out";
-  if (message.includes("failed to fetch") || message.includes("network") || message.includes("cors")) return "Unable to reach server";
-
-  return error?.message || "Login failed. Please try again";
+function getDashboardPath(role) {
+  if (role === "admin") return "../dashboards/admin.html";
+  if (role === "owner") return "../dashboards/owner.html";
+  if (role === "tenant") return "../dashboards/tenant.html";
+  return null;
 }
 
-function persistUser(user) {
-  localStorage.setItem("user", JSON.stringify(user));
-  localStorage.setItem("userId", user.user_id);
-  localStorage.setItem("role", user.role);
-  localStorage.setItem("name", user.name);
-}
-
-function redirectToDashboard(role) {
-  if (role === "admin") {
-    window.location.href = "../dashboards/admin.html";
+function redirectToRoleDashboard(role) {
+  const dashboardPath = getDashboardPath(role);
+  if (!dashboardPath) {
+    showToast("Unsupported role for dashboard access", "error");
     return;
   }
 
-  if (role === "owner") {
-    window.location.href = "../dashboards/owner.html";
-    return;
-  }
-
-  if (role === "tenant") {
-    window.location.href = "../dashboards/tenant.html";
-    return;
-  }
-
-  showToast("Unsupported role for dashboard access", "error");
+  setFlashMessage("Login successful", "success", "dashboard");
+  window.location.href = dashboardPath;
 }
 
-async function getAppUserById(userId) {
-  return supabaseClient
-    .from("users")
-    .select("user_id, name, email, role")
-    .eq("user_id", userId)
-    .limit(1)
-    .maybeSingle();
+async function resolveRoleByEmail(email) {
+  return supabaseClient.from("users").select("role").eq("email", email).single();
 }
 
 async function handleExistingSession() {
@@ -58,65 +33,63 @@ async function handleExistingSession() {
 
   if (!session) return;
 
-  const authUserId = session.user?.id;
-  if (!authUserId) return;
+  const email = session.user?.email?.trim().toLowerCase();
+  if (!email) {
+    await supabaseClient.auth.signOut();
+    return;
+  }
 
-  const { data: user } = await getAppUserById(authUserId);
-  if (!user) return;
+  const { data: profile, error } = await resolveRoleByEmail(email);
 
-  persistUser(user);
-  redirectToDashboard(user.role);
+  if (error || !profile?.role) {
+    await supabaseClient.auth.signOut();
+    showToast(error?.message || "Unable to load account profile", "error");
+    return;
+  }
+
+  redirectToRoleDashboard(profile.role);
 }
 
 void handleExistingSession();
 
-form.addEventListener("submit", async (event) => {
-  event.preventDefault();
+if (form) {
+  form.addEventListener("submit", async (event) => {
+    event.preventDefault();
 
-  const email = document.getElementById("email").value.trim().toLowerCase();
-  const password = document.getElementById("password").value;
+    const email = document.getElementById("email").value.trim().toLowerCase();
+    const password = document.getElementById("password").value;
 
-  if (!email || !password) {
-    showToast("Please enter email and password", "error");
-    return;
-  }
+    if (!email || !password) {
+      showToast("Please enter email and password", "error");
+      return;
+    }
 
-  const submitBtn = form.querySelector("button[type='submit']");
-  submitBtn.disabled = true;
-  submitBtn.textContent = "Logging in...";
+    const submitBtn = form.querySelector("button[type='submit']");
+    submitBtn.disabled = true;
+    submitBtn.textContent = "Logging in...";
 
-  const { data, error } = await supabaseClient.auth.signInWithPassword({
-    email,
-    password
+    const { error } = await supabaseClient.auth.signInWithPassword({
+      email,
+      password
+    });
+
+    if (error) {
+      submitBtn.disabled = false;
+      submitBtn.textContent = "Login";
+      showToast(error.message || "Login failed", "error");
+      return;
+    }
+
+    const { data: profile, error: profileError } = await resolveRoleByEmail(email);
+
+    if (profileError || !profile?.role) {
+      await supabaseClient.auth.signOut();
+      submitBtn.disabled = false;
+      submitBtn.textContent = "Login";
+      showToast(profileError?.message || "Unable to load account profile", "error");
+      return;
+    }
+
+    redirectToRoleDashboard(profile.role);
   });
-
-  if (error) {
-    submitBtn.disabled = false;
-    submitBtn.textContent = "Login";
-    showToast(getFriendlyAuthError(error), "error");
-    return;
-  }
-
-  const authUserId = data?.user?.id;
-  if (!authUserId) {
-    await supabaseClient.auth.signOut();
-    submitBtn.disabled = false;
-    submitBtn.textContent = "Login";
-    showToast("Unable to load account profile", "error");
-    return;
-  }
-
-  const { data: appUser, error: userError } = await getAppUserById(authUserId);
-
-  if (userError || !appUser) {
-    await supabaseClient.auth.signOut();
-    submitBtn.disabled = false;
-    submitBtn.textContent = "Login";
-    showToast("Unable to load account profile", "error");
-    return;
-  }
-
-  persistUser(appUser);
-  setFlashMessage("Login successful", "success", "dashboard");
-  redirectToDashboard(appUser.role);
-});
+}
