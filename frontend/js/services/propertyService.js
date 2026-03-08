@@ -33,12 +33,26 @@ export async function listProperties({ city = "", status = "" } = {}) {
 }
 
 export async function getPropertiesByOwnerUserId(userId, { city = "", status = "", search = "" } = {}) {
+  const { data: owner, error: ownerError } = await supabaseClient
+    .from("owners")
+    .select("owner_id")
+    .eq("user_id", Number(userId))
+    .maybeSingle();
+
+  if (ownerError) {
+    return { data: null, error: ownerError };
+  }
+
+  if (!owner?.owner_id) {
+    return { data: [], error: null };
+  }
+
   let query = supabaseClient
     .from("properties")
     .select(
       "property_id,owner_id,title,property_type,address,city,area_sqft,bedrooms,bathrooms,office_rooms,shop_units,rent_amount,allowed_usage,status,owners(user_id,users(name,email)),property_images(image_url)"
     )
-    .eq("owner_id", userId)
+    .eq("owner_id", owner.owner_id)
     .order("property_id", { ascending: false });
 
   if (city) query = query.ilike("city", `%${city}%`);
@@ -59,10 +73,41 @@ export async function getPropertiesByOwner(ownerId) {
 }
 
 export async function createProperty(payload) {
+  const currentUserId = Number(localStorage.getItem("userId"));
+  if (!Number.isFinite(currentUserId) || currentUserId <= 0) {
+    return { data: null, error: new Error("Invalid user ID") };
+  }
+
+  const { data: existingOwner, error: ownerLookupError } = await supabaseClient
+    .from("owners")
+    .select("owner_id")
+    .eq("user_id", currentUserId)
+    .maybeSingle();
+
+  if (ownerLookupError) {
+    return { data: null, error: ownerLookupError };
+  }
+
+  let ownerId = existingOwner?.owner_id;
+
+  if (!ownerId) {
+    const { data: createdOwner, error: createOwnerError } = await supabaseClient
+      .from("owners")
+      .insert([{ user_id: currentUserId }])
+      .select("owner_id")
+      .single();
+
+    if (createOwnerError) {
+      return { data: null, error: createOwnerError };
+    }
+
+    ownerId = createdOwner.owner_id;
+  }
+
   const usage = deriveAllowedUsage(payload);
 
   const insertPayload = {
-    owner_id: payload.owner_id ?? Number(localStorage.getItem("userId")),
+    owner_id: ownerId,
     title: payload.title,
     property_type: payload.property_type,
     address: payload.address,
@@ -111,7 +156,13 @@ export async function deleteProperty(propertyId) {
     return { error: imageDeleteError };
   }
 
-  return supabaseClient.from("properties").delete().eq("property_id", propertyId);
+  const response = await supabaseClient.from("properties").delete().eq("property_id", propertyId);
+
+  if (!response.error) {
+    localStorage.setItem("propertiesUpdatedAt", String(Date.now()));
+  }
+
+  return response;
 }
 
 export async function uploadPropertyImage(file, propertyId) {

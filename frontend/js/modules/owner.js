@@ -165,8 +165,7 @@ ownerQuickPropertyForm.addEventListener("submit", async (event) => {
     office_rooms: 0,
     shop_units: 0,
     allowed_usage: deriveAllowedUsage({ property_type: document.getElementById("quickPropertyType").value.trim() }),
-    status: document.getElementById("quickStatus").value,
-    owner_id: user.user_id
+    status: document.getElementById("quickStatus").value
   };
 
   const validation = validatePropertyPayload(payload);
