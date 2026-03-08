@@ -7,14 +7,19 @@ const DASHBOARD_GUARDS = {
   "/dashboards/admin.html": "admin"
 };
 
-function hidePublicAuthButtons() {
+function updatePublicAuthButtonsVisibility() {
   const loginBtn = document.getElementById("loginBtn");
   const signupBtn = document.getElementById("signupBtn");
+  const user = JSON.parse(localStorage.getItem("user"));
 
-  if (localStorage.getItem("user")) {
+  if (user) {
     if (loginBtn) loginBtn.style.display = "none";
     if (signupBtn) signupBtn.style.display = "none";
+    return;
   }
+
+  if (loginBtn) loginBtn.style.display = "";
+  if (signupBtn) signupBtn.style.display = "";
 }
 
 function getDashboardRoleForPath(pathname) {
@@ -56,6 +61,8 @@ async function protectDashboardPage(appUser) {
   }
 }
 
-const appUser = await syncSessionToLocalStorage();
-await protectDashboardPage(appUser);
-hidePublicAuthButtons();
+document.addEventListener("DOMContentLoaded", async () => {
+  const appUser = await syncSessionToLocalStorage();
+  await protectDashboardPage(appUser);
+  updatePublicAuthButtonsVisibility();
+});
