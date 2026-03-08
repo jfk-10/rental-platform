@@ -27,11 +27,27 @@ export async function getPropertiesByOwner(ownerId) {
 }
 
 export async function createProperty(payload) {
-  return supabaseClient
+  const insertPayload = {
+    owner_id: payload.owner_id ?? localStorage.getItem("userId"),
+    title: payload.title,
+    property_type: payload.property_type,
+    address: payload.address,
+    city: payload.city,
+    rent_amount: payload.rent_amount,
+    status: payload.status
+  };
+
+  const { data, error } = await supabaseClient
     .from("properties")
-    .insert([payload])
+    .insert([insertPayload])
     .select()
     .single();
+
+  if (error) {
+    console.error("Property insert error:", error);
+  }
+
+  return { data, error };
 }
 
 export async function updateProperty(propertyId, payload) {
