@@ -8,10 +8,12 @@ function getFriendlyAuthError(error) {
   const message = (error?.message || "").toLowerCase();
 
   if (!navigator.onLine) return "No internet connection";
+  if (message.includes("invalid login credentials")) return "Invalid email or password";
+  if (message.includes("email not confirmed")) return "Please confirm your email before logging in";
   if (message.includes("timed out") || message.includes("timeout")) return "Login request timed out";
   if (message.includes("failed to fetch") || message.includes("network") || message.includes("cors")) return "Unable to reach server";
 
-  return "Login failed. Please try again";
+  return error?.message || "Login failed. Please try again";
 }
 
 function persistUser(user) {
@@ -59,7 +61,7 @@ form.addEventListener("submit", async (event) => {
   event.preventDefault();
 
   const email = document.getElementById("email").value.trim().toLowerCase();
-  const password = document.getElementById("password").value.trim();
+  const password = document.getElementById("password").value;
 
   if (!email || !password) {
     showToast("Please enter email and password", "error");
@@ -70,18 +72,22 @@ form.addEventListener("submit", async (event) => {
   submitBtn.disabled = true;
   submitBtn.textContent = "Logging in...";
 
-  const { error: authError } = await supabaseClient.auth.signInWithPassword({ email, password });
+  const { data, error } = await supabaseClient.auth.signInWithPassword({
+    email,
+    password
+  });
 
-  if (authError) {
+  if (error) {
     submitBtn.disabled = false;
     submitBtn.textContent = "Login";
-    showToast(getFriendlyAuthError(authError), "error");
+    showToast(getFriendlyAuthError(error), "error");
     return;
   }
 
-  const { data, error } = await getAppUserByEmail(email);
+  const loginEmail = data?.user?.email?.toLowerCase() || email;
+  const { data: appUser, error: userError } = await getAppUserByEmail(loginEmail);
 
-  if (error || !data) {
+  if (userError || !appUser) {
     await supabaseClient.auth.signOut();
     submitBtn.disabled = false;
     submitBtn.textContent = "Login";
@@ -89,7 +95,7 @@ form.addEventListener("submit", async (event) => {
     return;
   }
 
-  persistUser(data);
+  persistUser(appUser);
   setFlashMessage("Login successful", "success", "dashboard");
-  redirectToDashboard(data.role);
+  redirectToDashboard(appUser.role);
 });
