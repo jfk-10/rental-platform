@@ -61,7 +61,7 @@ async function fetchProperties() {
       search: searchInput?.value.trim() || ""
     }));
   } else if (user.role === "tenant") {
-    ({ data, error } = await listProperties({ city: cityFilter.value.trim(), status: statusFilter.value.trim() || "Available" }));
+    ({ data, error } = await listProperties({ city: cityFilter.value.trim(), status: "Available" }));
   } else {
     ({ data, error } = await listProperties({ city: cityFilter.value.trim(), status: statusFilter.value.trim() }));
   }
@@ -130,6 +130,7 @@ async function handleDelete(propertyId) {
     return;
   }
   showToast("Property deleted successfully", "success");
+  localStorage.setItem("propertiesUpdatedAt", String(Date.now()));
   fetchProperties();
 }
 
@@ -176,3 +177,14 @@ propertyCards.addEventListener("click", async (event) => {
 });
 
 fetchProperties();
+
+if (user.role === "tenant") {
+  statusFilter.value = "Available";
+  statusFilter.disabled = true;
+}
+
+window.addEventListener("storage", (event) => {
+  if (event.key === "propertiesUpdatedAt") {
+    fetchProperties();
+  }
+});

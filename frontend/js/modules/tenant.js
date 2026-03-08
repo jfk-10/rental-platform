@@ -116,3 +116,10 @@ recommendationBox.addEventListener("click", (event) => {
 });
 
 loadTenantSummary();
+
+
+window.addEventListener("storage", (event) => {
+  if (event.key === "propertiesUpdatedAt") {
+    loadTenantSummary();
+  }
+});

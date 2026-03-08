@@ -2,7 +2,7 @@ import { requireUser } from "../core/auth.js";
 import { renderFlashMessage, showToast, formatCurrency } from "../utils/helpers.js";
 import { validatePropertyPayload } from "../utils/validators.js";
 import { getOwnerByUserId, saveOwnerProfile } from "../services/userService.js";
-import { createProperty, getPropertiesByOwnerUserId, uploadPropertyImage } from "../services/propertyService.js";
+import { createProperty, getPropertiesByOwnerUserId, uploadPropertyImage, deriveAllowedUsage } from "../services/propertyService.js";
 
 const user = requireUser(["owner"]);
 if (!user) throw new Error("Unauthorized");
@@ -164,7 +164,7 @@ ownerQuickPropertyForm.addEventListener("submit", async (event) => {
     bathrooms: 0,
     office_rooms: 0,
     shop_units: 0,
-    allowed_usage: "",
+    allowed_usage: deriveAllowedUsage({ property_type: document.getElementById("quickPropertyType").value.trim() }),
     status: document.getElementById("quickStatus").value,
     owner_id: user.user_id
   };
@@ -195,6 +195,7 @@ ownerQuickPropertyForm.addEventListener("submit", async (event) => {
   }
 
   showToast("Property added successfully", "success");
+  localStorage.setItem("propertiesUpdatedAt", String(Date.now()));
   ownerQuickPropertyForm.reset();
   selectedQuickImages = [];
   ownerQuickGalleryPreview.innerHTML = "";
@@ -204,3 +205,9 @@ ownerQuickPropertyForm.addEventListener("submit", async (event) => {
 });
 
 loadOwnerSummary();
+
+window.addEventListener("storage", (event) => {
+  if (event.key === "propertiesUpdatedAt") {
+    loadOwnerSummary();
+  }
+});

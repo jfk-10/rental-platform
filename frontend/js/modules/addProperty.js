@@ -1,5 +1,5 @@
 import { requireUser } from "../core/auth.js";
-import { createProperty, uploadPropertyImage } from "../services/propertyService.js";
+import { createProperty, uploadPropertyImage, deriveAllowedUsage } from "../services/propertyService.js";
 import { validatePropertyPayload } from "../utils/validators.js";
 import { showToast } from "../utils/helpers.js";
 
@@ -8,6 +8,7 @@ if (!user) throw new Error("Unauthorized");
 
 const form = document.getElementById("propertyForm");
 const propertyTypeInput = document.getElementById("propertyType");
+const allowedUsageInput = document.getElementById("allowedUsage");
 const imageInput = document.getElementById("propertyImages");
 const galleryPreview = document.getElementById("galleryPreview");
 
@@ -74,6 +75,15 @@ function applyPropertyTypeVisibility() {
       fieldInputs[field].value = "";
     }
   });
+
+  const usage = deriveAllowedUsage({
+    property_type: propertyTypeInput.value,
+    bedrooms: Number(fieldInputs.bedrooms?.value || 0),
+    bathrooms: Number(fieldInputs.bathrooms?.value || 0),
+    office_rooms: Number(fieldInputs.office_rooms?.value || 0),
+    shop_units: Number(fieldInputs.shop_units?.value || 0)
+  });
+  allowedUsageInput.value = usage;
 }
 
 function buildPayload() {
@@ -87,7 +97,13 @@ function buildPayload() {
     address: document.getElementById("address").value.trim(),
     city: document.getElementById("city").value.trim(),
     rent_amount: Number(document.getElementById("rent").value || 0),
-    allowed_usage: document.getElementById("allowedUsage").value.trim(),
+    allowed_usage: deriveAllowedUsage({
+      property_type: propertyType,
+      bedrooms: Number(fieldInputs.bedrooms?.value || 0),
+      bathrooms: Number(fieldInputs.bathrooms?.value || 0),
+      office_rooms: Number(fieldInputs.office_rooms?.value || 0),
+      shop_units: Number(fieldInputs.shop_units?.value || 0)
+    }),
     status: document.getElementById("status").value
   };
 
@@ -107,6 +123,10 @@ renderSelectedImages();
 applyPropertyTypeVisibility();
 
 propertyTypeInput.addEventListener("change", applyPropertyTypeVisibility);
+
+Object.values(fieldInputs).forEach((input) => {
+  input?.addEventListener("input", applyPropertyTypeVisibility);
+});
 
 imageInput.addEventListener("change", (event) => {
   const files = Array.from(event.target.files || []);
@@ -156,6 +176,7 @@ form.addEventListener("submit", async (event) => {
   }
 
   showToast("Property added successfully", "success");
+  localStorage.setItem("propertiesUpdatedAt", String(Date.now()));
   form.reset();
   selectedImages = [];
   renderSelectedImages();
