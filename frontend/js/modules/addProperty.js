@@ -91,7 +91,6 @@ function buildPayload() {
   const visibleFields = getVisibleFields(propertyType);
 
   const payload = {
-    owner_id: Number(localStorage.getItem("userId")),
     title: document.getElementById("title").value.trim(),
     property_type: propertyType,
     address: document.getElementById("address").value.trim(),
@@ -151,10 +150,6 @@ form.addEventListener("submit", async (event) => {
     return;
   }
 
-  if (!payload.owner_id) {
-    showToast("Unable to identify your account. Please log in again.", "error");
-    return;
-  }
 
   const submitBtn = form.querySelector("button[type='submit']");
   submitBtn.disabled = true;

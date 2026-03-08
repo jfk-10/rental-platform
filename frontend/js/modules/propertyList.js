@@ -43,11 +43,11 @@ function getRelevantDetails(property) {
 }
 
 function canEdit(property) {
-  return user.role === "owner" && Number(property.owner_id) === Number(user.user_id);
+  return user.role === "owner" && Number(property.owners?.user_id) === Number(user.user_id);
 }
 
 function canDelete(property) {
-  return user.role === "owner" && Number(property.owner_id) === Number(user.user_id);
+  return user.role === "owner" && Number(property.owners?.user_id) === Number(user.user_id);
 }
 
 async function fetchProperties() {
