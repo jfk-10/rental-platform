@@ -37,15 +37,14 @@ if (form) {
         throw new Error(signUpError.message || "Registration failed");
       }
 
-      const authUserId = data?.user?.id;
-      if (!authUserId) {
+      if (!data?.user) {
         throw new Error("Unable to create account. Please try again.");
       }
 
       const { error: profileError } = await supabaseClient.from("users").insert({
-        auth_user_id: authUserId,
         name: fullName,
         email,
+        password,
         role
       });
 

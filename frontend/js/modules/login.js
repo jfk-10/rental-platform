@@ -1,5 +1,4 @@
 import supabaseClient from "../core/supabaseClient.js";
-import { getUserByEmail } from "../services/userService.js";
 import { renderFlashMessage, showToast } from "../utils/helpers.js";
 
 const form = document.getElementById("loginForm");
@@ -19,23 +18,28 @@ if (form) {
     const email = document.getElementById("email").value.trim().toLowerCase();
     const password = document.getElementById("password").value;
 
-    const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
-    if (error || !data?.user) {
-      showToast(error?.message || "Login failed", "error");
+    const { data: authData, error: authError } = await supabaseClient.auth.signInWithPassword({ email, password });
+    if (authError || !authData?.user) {
+      showToast(authError?.message || "Login failed", "error");
       return;
     }
 
-    const { data: appUser, error: profileError } = await getUserByEmail(email);
-    if (profileError || !appUser?.role) {
-      showToast(profileError?.message || "Unable to load account profile", "error");
+    const { data: appUser, error: userError } = await supabaseClient
+      .from("users")
+      .select("user_id,name,email,role")
+      .eq("email", email)
+      .single();
+
+    if (userError || !appUser?.role) {
+      showToast(userError?.message || "Unable to load account profile", "error");
       return;
     }
 
-    localStorage.setItem("user", JSON.stringify(data.user));
+    localStorage.setItem("user", JSON.stringify(authData.user));
     localStorage.setItem("appUser", JSON.stringify(appUser));
     localStorage.setItem("userId", String(appUser.user_id));
     localStorage.setItem("role", appUser.role);
-    localStorage.setItem("userEmail", email);
+    localStorage.setItem("userEmail", appUser.email);
 
     const nextPage = getDashboardPath(appUser.role);
     if (!nextPage) {
