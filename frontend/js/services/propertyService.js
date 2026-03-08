@@ -16,6 +16,22 @@ export async function listProperties({ city = "", status = "" } = {}) {
   return query;
 }
 
+export async function getPropertiesByOwnerUserId(userId, { city = "", status = "", search = "" } = {}) {
+  let query = supabaseClient
+    .from("properties")
+    .select(
+      "property_id,owner_id,title,property_type,address,city,area_sqft,bedrooms,bathrooms,office_rooms,shop_units,rent_amount,allowed_usage,status,owners(user_id,users(name,email)),property_images(image_url)"
+    )
+    .eq("owner_id", userId)
+    .order("property_id", { ascending: false });
+
+  if (city) query = query.ilike("city", `%${city}%`);
+  if (status) query = query.eq("status", status);
+  if (search) query = query.or(`title.ilike.%${search}%,city.ilike.%${search}%,property_type.ilike.%${search}%`);
+
+  return query;
+}
+
 export async function getPropertiesByOwner(ownerId) {
   return supabaseClient
     .from("properties")
@@ -28,14 +44,22 @@ export async function getPropertiesByOwner(ownerId) {
 
 export async function createProperty(payload) {
   const insertPayload = {
-    owner_id: payload.owner_id ?? localStorage.getItem("userId"),
+    owner_id: payload.owner_id ?? Number(localStorage.getItem("userId")),
     title: payload.title,
     property_type: payload.property_type,
     address: payload.address,
     city: payload.city,
     rent_amount: payload.rent_amount,
+    allowed_usage: payload.allowed_usage,
     status: payload.status
   };
+
+  const optionalFields = ["area_sqft", "bedrooms", "bathrooms", "office_rooms", "shop_units"];
+  for (const field of optionalFields) {
+    if (field in payload && payload[field] !== undefined && payload[field] !== null && payload[field] !== "") {
+      insertPayload[field] = payload[field];
+    }
+  }
 
   const { data, error } = await supabaseClient
     .from("properties")

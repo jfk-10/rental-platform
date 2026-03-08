@@ -1,6 +1,5 @@
 import { requireUser } from "../core/auth.js";
-import { listProperties, getPropertiesByOwner, deleteProperty, updateProperty } from "../services/propertyService.js";
-import { getOwnerByUserId } from "../services/userService.js";
+import { listProperties, getPropertiesByOwnerUserId, deleteProperty, updateProperty } from "../services/propertyService.js";
 import { formatCurrency, showToast } from "../utils/helpers.js";
 
 const user = requireUser(["admin", "owner", "tenant"]);
@@ -8,6 +7,7 @@ if (!user) throw new Error("Unauthorized");
 
 const cityFilter = document.getElementById("cityFilter");
 const statusFilter = document.getElementById("statusFilter");
+const searchInput = document.getElementById("searchInput");
 const searchBtn = document.getElementById("searchBtn");
 const propertyCards = document.getElementById("propertyCards");
 
@@ -20,8 +20,34 @@ function statusClass(status) {
   return "status-pill status-inactive";
 }
 
-function canManage(property) {
-  return user.role === "admin" || (user.role === "owner" && property.owners?.user_id === user.user_id);
+function getRelevantDetails(property) {
+  const type = (property.property_type || "").toLowerCase();
+
+  if (type === "apartment" || type === "house") {
+    return `Bedrooms: ${property.bedrooms || 0} · Bathrooms: ${property.bathrooms || 0} · Area: ${property.area_sqft || 0} sqft`;
+  }
+
+  if (type === "studio") {
+    return `Bathrooms: ${property.bathrooms || 0} · Area: ${property.area_sqft || 0} sqft`;
+  }
+
+  if (type === "office") {
+    return `Office Rooms: ${property.office_rooms || 0} · Area: ${property.area_sqft || 0} sqft`;
+  }
+
+  if (type === "shop" || type === "commercial") {
+    return `Shop Units: ${property.shop_units || 0} · Area: ${property.area_sqft || 0} sqft`;
+  }
+
+  return `Area: ${property.area_sqft || 0} sqft`;
+}
+
+function canEdit(property) {
+  return user.role === "owner" && Number(property.owner_id) === Number(user.user_id);
+}
+
+function canDelete(property) {
+  return user.role === "owner" && Number(property.owner_id) === Number(user.user_id);
 }
 
 async function fetchProperties() {
@@ -29,12 +55,13 @@ async function fetchProperties() {
   let error;
 
   if (user.role === "owner") {
-    const ownerResult = await getOwnerByUserId(user.user_id);
-    if (ownerResult.error || !ownerResult.data) {
-      showToast("Owner profile not found", "error");
-      return;
-    }
-    ({ data, error } = await getPropertiesByOwner(ownerResult.data.owner_id));
+    ({ data, error } = await getPropertiesByOwnerUserId(user.user_id, {
+      city: cityFilter.value.trim(),
+      status: statusFilter.value.trim(),
+      search: searchInput?.value.trim() || ""
+    }));
+  } else if (user.role === "tenant") {
+    ({ data, error } = await listProperties({ city: cityFilter.value.trim(), status: statusFilter.value.trim() || "Available" }));
   } else {
     ({ data, error } = await listProperties({ city: cityFilter.value.trim(), status: statusFilter.value.trim() }));
   }
@@ -49,12 +76,13 @@ async function fetchProperties() {
 
 function renderCards(properties) {
   if (!properties.length) {
-    const addPropertyHref = user.role === "owner" ? "./add-property.html" : "../dashboards/owner.html";
     propertyCards.innerHTML = `
       <div class='empty-state card'>
         <h3>No properties found</h3>
         <p>Adjust your filters or add a property to continue.</p>
-        ${user.role === "owner" ? `<a class='btn btn-primary' href='${addPropertyHref}'>Add Property</a>` : `<button class='btn btn-primary' type='button' id='resetPropertyFilters'>Reset Filters</button>`}
+        ${user.role === "owner"
+    ? "<a class='btn btn-primary' href='./add-property.html'>Add Property</a>"
+    : "<button class='btn btn-primary' type='button' id='resetPropertyFilters'>Reset Filters</button>"}
       </div>
     `;
     return;
@@ -63,13 +91,17 @@ function renderCards(properties) {
   propertyCards.innerHTML = properties.map((property) => {
     const imageUrl = property.property_images?.[0]?.image_url || FALLBACK_IMG;
     const ownerName = property.owners?.users?.name || "Owner";
-    const ownerEmail = property.owners?.users?.email || "N/A";
-    const manageActions = canManage(property)
-      ? `
-        <button class='btn btn-secondary editBtn' data-id='${property.property_id}'>Edit</button>
-        <button class='btn btn-danger deleteBtn' data-id='${property.property_id}'>Delete</button>
-      `
-      : "";
+
+    const ownerActions = `
+      <a class="btn btn-primary" href="./property-details.html?id=${property.property_id}">View</a>
+      ${canEdit(property) ? `<button class='btn btn-secondary editBtn' data-id='${property.property_id}'>Edit</button>` : ""}
+      ${canDelete(property) ? `<button class='btn btn-danger deleteBtn' data-id='${property.property_id}'>Delete</button>` : ""}
+    `;
+
+    const tenantActions = `
+      <a class="btn btn-primary" href="./property-details.html?id=${property.property_id}">View</a>
+      ${property.owners?.users?.email ? `<a class="btn btn-secondary" href="mailto:${property.owners.users.email}">Contact Owner</a>` : ""}
+    `;
 
     return `
       <article class="property-card card">
@@ -80,10 +112,9 @@ function renderCards(properties) {
           <p><strong>Monthly Rent:</strong> ${formatCurrency(property.rent_amount)}</p>
           <p><strong>Status:</strong> <span class="${statusClass(property.status)}">${property.status || "Unknown"}</span></p>
           <p class="property-meta"><strong>Owner:</strong> ${ownerName}</p>
+          <p class="property-meta"><strong>Details:</strong> ${getRelevantDetails(property)}</p>
           <div class="actions-row compact-actions">
-            <a class="btn btn-primary" href="./property-details.html?id=${property.property_id}">View</a>
-            ${manageActions}
-            ${ownerEmail !== "N/A" ? `<a class="btn btn-secondary" href="mailto:${ownerEmail}">Contact</a>` : ""}
+            ${user.role === "tenant" ? tenantActions : ownerActions}
           </div>
         </div>
       </article>
@@ -132,6 +163,7 @@ propertyCards.addEventListener("click", async (event) => {
   if (target.id === "resetPropertyFilters") {
     cityFilter.value = "";
     statusFilter.value = "";
+    if (searchInput) searchInput.value = "";
     fetchProperties();
     return;
   }

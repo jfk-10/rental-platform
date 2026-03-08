@@ -2,7 +2,7 @@ import { requireUser } from "../core/auth.js";
 import { renderFlashMessage, showToast, formatCurrency } from "../utils/helpers.js";
 import { validatePropertyPayload } from "../utils/validators.js";
 import { getOwnerByUserId, saveOwnerProfile } from "../services/userService.js";
-import { createProperty, getPropertiesByOwner, uploadPropertyImage } from "../services/propertyService.js";
+import { createProperty, getPropertiesByOwnerUserId, uploadPropertyImage } from "../services/propertyService.js";
 
 const user = requireUser(["owner"]);
 if (!user) throw new Error("Unauthorized");
@@ -79,7 +79,7 @@ async function loadOwnerSummary() {
     return;
   }
 
-  const { data: properties } = await getPropertiesByOwner(ownerProfile.owner_id);
+  const { data: properties } = await getPropertiesByOwnerUserId(user.user_id);
   const rows = properties || [];
   const rented = rows.filter((item) => item.status === "Rented");
   const income = rented.reduce((sum, item) => sum + Number(item.rent_amount || 0), 0);
@@ -166,7 +166,7 @@ ownerQuickPropertyForm.addEventListener("submit", async (event) => {
     shop_units: 0,
     allowed_usage: "",
     status: document.getElementById("quickStatus").value,
-    owner_id: ownerData.owner_id
+    owner_id: user.user_id
   };
 
   const validation = validatePropertyPayload(payload);

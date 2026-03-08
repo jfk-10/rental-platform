@@ -1,5 +1,4 @@
 import { requireUser } from "../core/auth.js";
-import { getOwnerByUserId } from "../services/userService.js";
 import { createProperty, uploadPropertyImage } from "../services/propertyService.js";
 import { validatePropertyPayload } from "../utils/validators.js";
 import { showToast } from "../utils/helpers.js";
@@ -8,8 +7,34 @@ const user = requireUser(["owner"]);
 if (!user) throw new Error("Unauthorized");
 
 const form = document.getElementById("propertyForm");
+const propertyTypeInput = document.getElementById("propertyType");
 const imageInput = document.getElementById("propertyImages");
 const galleryPreview = document.getElementById("galleryPreview");
+
+const fieldWrappers = {
+  area_sqft: document.getElementById("fieldAreaSqft"),
+  bedrooms: document.getElementById("fieldBedrooms"),
+  bathrooms: document.getElementById("fieldBathrooms"),
+  office_rooms: document.getElementById("fieldOfficeRooms"),
+  shop_units: document.getElementById("fieldShopUnits")
+};
+
+const fieldInputs = {
+  area_sqft: document.getElementById("areaSqft"),
+  bedrooms: document.getElementById("bedrooms"),
+  bathrooms: document.getElementById("bathrooms"),
+  office_rooms: document.getElementById("officeRooms"),
+  shop_units: document.getElementById("shopUnits")
+};
+
+const PROPERTY_TYPE_FIELDS = {
+  apartment: ["bedrooms", "bathrooms", "area_sqft"],
+  house: ["bedrooms", "bathrooms", "area_sqft"],
+  studio: ["bathrooms", "area_sqft"],
+  office: ["office_rooms", "area_sqft"],
+  shop: ["shop_units", "area_sqft"],
+  commercial: ["shop_units", "area_sqft"]
+};
 
 let selectedImages = [];
 
@@ -34,7 +59,54 @@ function renderSelectedImages() {
     : `<p class="gallery-placeholder">Selected photos will appear here.</p>`;
 }
 
+function getVisibleFields(propertyType) {
+  const key = (propertyType || "").toLowerCase();
+  return PROPERTY_TYPE_FIELDS[key] || ["area_sqft"];
+}
+
+function applyPropertyTypeVisibility() {
+  const visibleFields = getVisibleFields(propertyTypeInput.value);
+
+  Object.entries(fieldWrappers).forEach(([field, wrapper]) => {
+    const shouldShow = visibleFields.includes(field);
+    if (wrapper) wrapper.style.display = shouldShow ? "block" : "none";
+    if (!shouldShow && fieldInputs[field]) {
+      fieldInputs[field].value = "";
+    }
+  });
+}
+
+function buildPayload() {
+  const propertyType = propertyTypeInput.value.trim();
+  const visibleFields = getVisibleFields(propertyType);
+
+  const payload = {
+    owner_id: Number(localStorage.getItem("userId")),
+    title: document.getElementById("title").value.trim(),
+    property_type: propertyType,
+    address: document.getElementById("address").value.trim(),
+    city: document.getElementById("city").value.trim(),
+    rent_amount: Number(document.getElementById("rent").value || 0),
+    allowed_usage: document.getElementById("allowedUsage").value.trim(),
+    status: document.getElementById("status").value
+  };
+
+  visibleFields.forEach((field) => {
+    const input = fieldInputs[field];
+    if (!input) return;
+    const numericValue = Number(input.value);
+    if (Number.isFinite(numericValue)) {
+      payload[field] = numericValue;
+    }
+  });
+
+  return payload;
+}
+
 renderSelectedImages();
+applyPropertyTypeVisibility();
+
+propertyTypeInput.addEventListener("change", applyPropertyTypeVisibility);
 
 imageInput.addEventListener("change", (event) => {
   const files = Array.from(event.target.files || []);
@@ -52,41 +124,24 @@ galleryPreview.addEventListener("click", (event) => {
 form.addEventListener("submit", async (event) => {
   event.preventDefault();
 
-  const payload = {
-    title: document.getElementById("title").value.trim(),
-    property_type: document.getElementById("propertyType").value.trim(),
-    address: document.getElementById("address").value.trim(),
-    city: document.getElementById("city").value.trim(),
-    area_sqft: Number(document.getElementById("areaSqft").value || 0),
-    bedrooms: Number(document.getElementById("bedrooms").value || 0),
-    bathrooms: Number(document.getElementById("bathrooms").value || 0),
-    office_rooms: 0,
-    shop_units: 0,
-    rent_amount: Number(document.getElementById("rent").value || 0),
-    allowed_usage: document.getElementById("allowedUsage").value.trim(),
-    status: document.getElementById("status").value
-  };
-
+  const payload = buildPayload();
   const validation = validatePropertyPayload(payload);
   if (!validation.valid) {
     showToast(validation.errors.join(", "), "error");
     return;
   }
 
-  const { data: ownerData, error: ownerError } = await getOwnerByUserId(user.user_id);
-  if (ownerError || !ownerData?.owner_id) {
-    showToast("Please complete owner profile before adding properties", "error");
+  if (!payload.owner_id) {
+    showToast("Unable to identify your account. Please log in again.", "error");
     return;
   }
-
-  payload.owner_id = ownerData.owner_id;
 
   const submitBtn = form.querySelector("button[type='submit']");
   submitBtn.disabled = true;
   submitBtn.textContent = "Publishing...";
 
   const { data, error } = await createProperty(payload);
-  if (error || !data) {
+  if (error || !data?.property_id) {
     showToast("Failed to create property", "error");
     submitBtn.disabled = false;
     submitBtn.textContent = "Publish Property";
@@ -104,6 +159,7 @@ form.addEventListener("submit", async (event) => {
   form.reset();
   selectedImages = [];
   renderSelectedImages();
+  applyPropertyTypeVisibility();
   submitBtn.disabled = false;
   submitBtn.textContent = "Publish Property";
 });
