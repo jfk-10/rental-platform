@@ -24,9 +24,22 @@ function persistUser(user) {
 }
 
 function redirectToDashboard(role) {
-  if (role === "admin") window.location.href = "../dashboards/admin.html";
-  else if (role === "owner") window.location.href = "../dashboards/owner.html";
-  else window.location.href = "../dashboards/tenant.html";
+  if (role === "admin") {
+    window.location.href = "../dashboards/admin.html";
+    return;
+  }
+
+  if (role === "owner") {
+    window.location.href = "../dashboards/owner.html";
+    return;
+  }
+
+  if (role === "tenant") {
+    window.location.href = "../dashboards/tenant.html";
+    return;
+  }
+
+  showToast("Unsupported role for dashboard access", "error");
 }
 
 async function getAppUserById(userId) {

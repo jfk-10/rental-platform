@@ -2,6 +2,7 @@ import supabaseClient from "../core/supabaseClient.js";
 import { setFlashMessage, showToast } from "../utils/helpers.js";
 
 const form = document.getElementById("registerForm");
+const REGISTRATION_ROLES = ["owner", "tenant"];
 
 function getFriendlyRegisterError(error) {
   const message = (error?.message || "").toLowerCase();
@@ -35,6 +36,11 @@ form.addEventListener("submit", async (event) => {
 
   if (!name || !email || !password || !role) {
     showToast("Please fill all required fields", "error");
+    return;
+  }
+
+  if (!REGISTRATION_ROLES.includes(role)) {
+    showToast("Only owner and tenant accounts can be self-registered", "error");
     return;
   }
 
