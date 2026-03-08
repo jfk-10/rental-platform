@@ -4,7 +4,7 @@ import { listProperties } from "../services/propertyService.js";
 import { createAgreement, listAgreements, updateAgreementStatus, updateAgreement, deleteAgreement } from "../services/agreementService.js";
 import { formatCurrency, formatDate, showToast } from "../utils/helpers.js";
 
-const user = requireUser(["admin", "owner", "tenant"]);
+const user = await requireUser(["admin", "owner", "tenant"]);
 if (!user) throw new Error("Unauthorized");
 
 const adminForm = document.getElementById("agreementForm");

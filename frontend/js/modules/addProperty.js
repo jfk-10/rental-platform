@@ -3,7 +3,7 @@ import { createProperty, deriveAllowedUsage } from "../services/propertyService.
 import { validatePropertyPayload } from "../utils/validators.js";
 import { showToast } from "../utils/helpers.js";
 
-const user = requireUser(["owner"]);
+const user = await requireUser(["owner"]);
 if (!user) throw new Error("Unauthorized");
 
 const form = document.getElementById("propertyForm");

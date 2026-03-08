@@ -7,7 +7,7 @@ import {
 } from "../services/userService.js";
 import { showToast } from "../utils/helpers.js";
 
-const user = requireUser(["admin", "owner", "tenant"]);
+const user = await requireUser(["admin", "owner", "tenant"]);
 if (!user) throw new Error("Unauthorized");
 
 const profileSections = document.getElementById("profileSections");

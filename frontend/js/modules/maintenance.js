@@ -3,7 +3,7 @@ import { listAgreements } from "../services/agreementService.js";
 import { createMaintenanceRequest, listMaintenanceRequests, updateMaintenanceRequest } from "../services/maintenanceService.js";
 import { formatCurrency, formatDate, showToast } from "../utils/helpers.js";
 
-const user = requireUser(["admin", "owner", "tenant"]);
+const user = await requireUser(["admin", "owner", "tenant"]);
 if (!user) throw new Error("Unauthorized");
 
 const requestForm = document.getElementById("requestForm");

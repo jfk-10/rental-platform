@@ -7,30 +7,53 @@ renderFlashMessage("auth");
 function getFriendlyAuthError(error) {
   const message = (error?.message || "").toLowerCase();
 
-  if (!navigator.onLine) {
-    return "No internet connection";
-  }
-
-  if (message.includes("timed out") || message.includes("timeout")) {
-    return "Login request timed out";
-  }
-
-  if (message.includes("failed to fetch") || message.includes("network") || message.includes("cors")) {
-    return "Unable to reach server";
-  }
+  if (!navigator.onLine) return "No internet connection";
+  if (message.includes("timed out") || message.includes("timeout")) return "Login request timed out";
+  if (message.includes("failed to fetch") || message.includes("network") || message.includes("cors")) return "Unable to reach server";
 
   return "Login failed. Please try again";
 }
 
-async function findUserByEmailAndPassword(email, password) {
+function persistUser(user) {
+  localStorage.setItem("user", JSON.stringify(user));
+  localStorage.setItem("userId", user.user_id);
+  localStorage.setItem("role", user.role);
+  localStorage.setItem("name", user.name);
+}
+
+function redirectToDashboard(role) {
+  if (role === "admin") window.location.href = "../dashboards/admin.html";
+  else if (role === "owner") window.location.href = "../dashboards/owner.html";
+  else window.location.href = "../dashboards/tenant.html";
+}
+
+async function getAppUserByEmail(email) {
   return supabaseClient
     .from("users")
     .select("user_id, name, email, role")
     .eq("email", email)
-    .eq("password", password)
     .limit(1)
     .maybeSingle();
 }
+
+async function handleExistingSession() {
+  const {
+    data: { session }
+  } = await supabaseClient.auth.getSession();
+
+  if (!session) return;
+
+  const email = session.user?.email?.toLowerCase();
+  if (!email) return;
+
+  const { data: user } = await getAppUserByEmail(email);
+  if (!user) return;
+
+  persistUser(user);
+  redirectToDashboard(user.role);
+}
+
+void handleExistingSession();
 
 form.addEventListener("submit", async (event) => {
   event.preventDefault();
@@ -47,35 +70,26 @@ form.addEventListener("submit", async (event) => {
   submitBtn.disabled = true;
   submitBtn.textContent = "Logging in...";
 
-  let result = await findUserByEmailAndPassword(email, password);
-  if (result.error && navigator.onLine) {
-    result = await findUserByEmailAndPassword(email, password);
-  }
+  const { error: authError } = await supabaseClient.auth.signInWithPassword({ email, password });
 
-  const { data, error } = result;
-
-  if (error) {
+  if (authError) {
     submitBtn.disabled = false;
     submitBtn.textContent = "Login";
-    showToast(getFriendlyAuthError(error), "error");
+    showToast(getFriendlyAuthError(authError), "error");
     return;
   }
 
-  if (!data) {
+  const { data, error } = await getAppUserByEmail(email);
+
+  if (error || !data) {
+    await supabaseClient.auth.signOut();
     submitBtn.disabled = false;
     submitBtn.textContent = "Login";
-    showToast("Invalid email or password", "error");
+    showToast("Unable to load account profile", "error");
     return;
   }
 
-  localStorage.setItem("user", JSON.stringify(data));
-  localStorage.setItem("userId", data.user_id);
-  localStorage.setItem("role", data.role);
-  localStorage.setItem("name", data.name);
-
+  persistUser(data);
   setFlashMessage("Login successful", "success", "dashboard");
-
-  if (data.role === "admin") window.location.href = "../dashboards/admin.html";
-  else if (data.role === "owner") window.location.href = "../dashboards/owner.html";
-  else window.location.href = "../dashboards/tenant.html";
+  redirectToDashboard(data.role);
 });

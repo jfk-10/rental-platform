@@ -4,7 +4,7 @@ import { validatePropertyPayload } from "../utils/validators.js";
 import { getOwnerByUserId, saveOwnerProfile } from "../services/userService.js";
 import { createProperty, getPropertiesByOwnerUserId, uploadPropertyImage, deriveAllowedUsage } from "../services/propertyService.js";
 
-const user = requireUser(["owner"]);
+const user = await requireUser(["owner"]);
 if (!user) throw new Error("Unauthorized");
 
 renderFlashMessage("dashboard");

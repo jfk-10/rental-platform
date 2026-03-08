@@ -3,7 +3,7 @@ import { renderFlashMessage, showToast, formatCurrency } from "../utils/helpers.
 import { listProperties } from "../services/propertyService.js";
 import { getTenantByUserId, saveTenantProfile } from "../services/userService.js";
 
-const user = requireUser(["tenant"]);
+const user = await requireUser(["tenant"]);
 if (!user) throw new Error("Unauthorized");
 
 renderFlashMessage("dashboard");
