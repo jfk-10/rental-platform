@@ -3,7 +3,7 @@ import { renderFlashMessage } from "../utils/helpers.js";
 import { getAllUsers } from "../services/userService.js";
 import { listProperties } from "../services/propertyService.js";
 
-const user = requireUser(["admin"]);
+const user = await requireUser(["admin"]);
 if (!user) throw new Error("Unauthorized");
 
 renderFlashMessage("dashboard");

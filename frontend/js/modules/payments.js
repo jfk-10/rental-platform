@@ -3,7 +3,7 @@ import { listAgreements } from "../services/agreementService.js";
 import { createPayment, listPayments } from "../services/paymentService.js";
 import { formatCurrency, formatDate, showToast } from "../utils/helpers.js";
 
-const user = requireUser(["admin", "owner", "tenant"]);
+const user = await requireUser(["admin", "owner", "tenant"]);
 if (!user) throw new Error("Unauthorized");
 
 const paymentForm = document.getElementById("paymentForm");
