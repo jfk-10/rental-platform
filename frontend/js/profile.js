@@ -1,9 +1,11 @@
 import supabaseClient from "./core/supabaseClient.js";
 import { logout as logoutSession } from "./core/auth.js";
-import { updateUserProfile } from "./services/userService.js";
+import { showToast } from "./utils/helpers.js";
 
+const authUser = JSON.parse(localStorage.getItem("user") || "null");
 const appUser = JSON.parse(localStorage.getItem("appUser") || "null");
-if (!appUser) {
+
+if (!authUser || !appUser) {
   window.location.href = "/pages/login.html";
 }
 
@@ -13,10 +15,6 @@ const saveProfileBtn = document.getElementById("saveProfileBtn");
 const logoutBtn = document.getElementById("logoutBtn");
 
 let isEditing = false;
-
-function isProfileComplete(data) {
-  return Boolean(data?.name && data?.phone && data?.city);
-}
 
 function renderProfile(user) {
   document.getElementById("profileName").value = user.name || "";
@@ -29,7 +27,7 @@ function renderProfile(user) {
 
 function setEditMode(enabled) {
   isEditing = enabled;
-  document.getElementById("profileName").disabled = !enabled;
+  document.getElementById("profileName").disabled = true;
   document.getElementById("profilePhone").disabled = !enabled;
   document.getElementById("profileCity").disabled = !enabled;
   saveProfileBtn.hidden = !enabled;
@@ -41,28 +39,46 @@ setEditMode(false);
 
 editProfileBtn.addEventListener("click", () => {
   setEditMode(!isEditing);
-  if (!isEditing) renderProfile(JSON.parse(localStorage.getItem("appUser") || "null") || appUser);
+
+  if (!isEditing) {
+    renderProfile(JSON.parse(localStorage.getItem("appUser") || "null") || appUser);
+  }
 });
 
 profileForm.addEventListener("submit", async (event) => {
   event.preventDefault();
 
-  const payload = {
-    name: document.getElementById("profileName").value.trim(),
-    phone: document.getElementById("profilePhone").value.trim(),
-    city: document.getElementById("profileCity").value.trim()
-  };
+  const phone = document.getElementById("profilePhone").value.trim();
+  const city = document.getElementById("profileCity").value.trim();
 
-  payload.profile_completed = isProfileComplete(payload);
+  if (!phone || !city) {
+    showToast("Please fill phone and city to complete your profile", "error");
+    return;
+  }
 
-  const { data, error } = await updateUserProfile(appUser.user_id, payload);
-  if (error || !data) return;
+  const { data, error } = await supabaseClient
+    .from("users")
+    .update({
+      phone,
+      city,
+      profile_completed: true
+    })
+    .eq("auth_user_id", authUser.id)
+    .select("user_id,auth_user_id,name,email,role,phone,city,profile_completed")
+    .single();
+
+  if (error || !data) {
+    showToast(error?.message || "Failed to update profile", "error");
+    return;
+  }
 
   localStorage.setItem("appUser", JSON.stringify(data));
   localStorage.setItem("userId", String(data.user_id));
   localStorage.setItem("role", data.role || "");
+
   renderProfile(data);
   setEditMode(false);
+  showToast("Profile updated successfully", "success");
 });
 
 logoutBtn.addEventListener("click", async () => {

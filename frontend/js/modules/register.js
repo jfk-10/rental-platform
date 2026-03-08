@@ -46,11 +46,7 @@ if (form) {
         auth_user_id: authUserId,
         name: fullName,
         email,
-        password,
-        role,
-        phone: null,
-        city: null,
-        profile_completed: false
+        role
       });
 
       if (profileError) {

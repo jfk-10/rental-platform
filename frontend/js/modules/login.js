@@ -14,7 +14,7 @@ function getDashboardPath(role) {
 async function getProfileByAuthId(authUserId) {
   return supabaseClient
     .from("users")
-    .select("user_id,auth_user_id,name,email,role,phone,city,profile_completed")
+    .select("user_id,name,email,role,phone,city,profile_completed")
     .eq("auth_user_id", authUserId)
     .single();
 }
