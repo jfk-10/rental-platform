@@ -1,4 +1,5 @@
 import { getUserByEmail } from "./services/userService.js";
+import supabaseClient from "./core/supabaseClient.js";
 
 const DASHBOARD_GUARDS = {
   "/dashboards/owner.html": "owner",
@@ -30,24 +31,36 @@ async function protectDashboardPage() {
   const requiredRole = getDashboardRoleForPath(window.location.pathname);
   if (!requiredRole) return;
 
-  const email = localStorage.getItem("loggedInUser") || localStorage.getItem("userEmail");
-  if (!email) {
-    window.location.href = "/pages/login.html";
-    return;
-  }
+  const { data: sessionData, error: sessionError } = await supabaseClient.auth.getSession();
+  const sessionEmail = sessionData?.session?.user?.email?.trim().toLowerCase();
 
-  const { data: user, error } = await getUserByEmail(email);
-  if (error || !user || user.role !== requiredRole) {
+  if (sessionError || !sessionEmail) {
     localStorage.removeItem("loggedInUser");
+    localStorage.removeItem("appUser");
+    localStorage.removeItem("userId");
+    localStorage.removeItem("role");
+    localStorage.removeItem("userEmail");
     window.location.href = "/pages/login.html";
     return;
   }
 
-  localStorage.setItem("loggedInUser", user.email);
+  const { data: user, error } = await getUserByEmail(sessionEmail);
+  const normalizedRole = String(user?.role || "").trim().toLowerCase();
+  if (error || !user || normalizedRole !== requiredRole) {
+    localStorage.removeItem("loggedInUser");
+    localStorage.removeItem("appUser");
+    localStorage.removeItem("userId");
+    localStorage.removeItem("role");
+    localStorage.removeItem("userEmail");
+    window.location.href = "/pages/login.html";
+    return;
+  }
+
+  localStorage.setItem("loggedInUser", sessionEmail);
   localStorage.setItem("appUser", JSON.stringify(user));
   localStorage.setItem("userId", String(user.user_id));
-  localStorage.setItem("role", user.role);
-  localStorage.setItem("userEmail", user.email);
+  localStorage.setItem("role", normalizedRole);
+  localStorage.setItem("userEmail", sessionEmail);
 }
 
 document.addEventListener("DOMContentLoaded", async () => {
