@@ -6,39 +6,40 @@
   <title>Profile | Rental Platform</title>
   <link rel="stylesheet" href="../css/global.css" />
   <link rel="stylesheet" href="../css/forms.css" />
-  <link rel="apple-touch-icon" href="/assets/icons/apple-touch-icon.png">
-  <link rel="manifest" href="/assets/icons/site.webmanifest">
-  <link rel="icon" href="/assets/icons/favicon.ico?v=1">
-  <link rel="preload" href="/assets/css/style.css" as="style">
-  <link rel="preload" href="/assets/js/main.js" as="script">
-  <link rel="stylesheet" href="/assets/css/style.css">
 </head>
 <body class="app-body">
   <div class="utility-bar">
-    <a class="btn btn-secondary" data-back-dashboard href="../dashboards/owner.html">← Back to Dashboard</a>
+    <div class="app-nav shell-panel navbar-container">
+      <a class="app-brand" href="../index.html">🏠 Rental Platform</a>
+      <nav class="app-links">
+        <a href="../pages/profile.html">Profile</a>
+      </nav>
+    </div>
   </div>
 
   <main class="page-shell">
     <section class="page-card profile-page-card">
       <div class="profile-page-head">
-        <div>
-          <h1 class="section-title">Your Profile</h1>
-          <p class="section-subtitle">Manage your account, contact, and role details.</p>
-        </div>
+        <h1 class="section-title">Your Profile</h1>
         <div class="actions-row profile-actions">
-          <button id="editProfileBtn" class="btn btn-primary profile-edit-toggle" type="button">Edit Profile</button>
-          <button id="cancelEditBtn" class="btn btn-secondary is-invisible" type="button" aria-hidden="true">Cancel</button>
+          <button id="editProfileBtn" class="btn btn-primary" type="button">Edit Profile</button>
           <button id="logoutBtn" class="btn btn-danger" type="button">Logout</button>
         </div>
       </div>
 
-      <div id="profileSections" class="profile-sections"></div>
+      <form id="profileForm" class="form-grid">
+        <div><label for="profileName">Name</label><input id="profileName" type="text" required /></div>
+        <div><label for="profileEmail">Email</label><input id="profileEmail" type="email" disabled /></div>
+        <div><label for="profileRole">Role</label><input id="profileRole" type="text" disabled /></div>
+        <div><label for="profilePhone">Phone</label><input id="profilePhone" type="text" required /></div>
+        <div><label for="profileCity">City</label><input id="profileCity" type="text" required /></div>
+        <div><label for="profileCompletion">Profile Completion</label><input id="profileCompletion" type="text" disabled /></div>
+        <div class="full"><button id="saveProfileBtn" class="btn btn-primary" type="submit" hidden>Save Profile</button></div>
+      </form>
     </section>
   </main>
 
-  <script type="module" src="../js/core/toast.js"></script>
-<script type="module" src="../js/modules/profile.js"></script>
-  <script type="module" src="../js/modules/appShell.js"></script>
-  <script src="/assets/js/main.js" defer></script>
+  <script type="module" src="../js/authGuard.js"></script>
+  <script type="module" src="../js/profile.js"></script>
 </body>
 </html>

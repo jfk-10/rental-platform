@@ -4,9 +4,14 @@ create extension if not exists "pgcrypto";
 
 create table if not exists users (
   user_id bigint generated always as identity primary key,
+  auth_user_id uuid unique,
   name text not null,
   email text not null unique,
+  password text,
   role text not null check (role in ('admin', 'owner', 'tenant')),
+  phone text,
+  city text,
+  profile_completed boolean not null default false,
   created_at timestamptz not null default now()
 );
 

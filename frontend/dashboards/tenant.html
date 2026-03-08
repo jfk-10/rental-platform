@@ -7,54 +7,41 @@
   <link rel="stylesheet" href="../css/global.css" />
   <link rel="stylesheet" href="../css/forms.css" />
   <link rel="stylesheet" href="../css/dashboard.css" />
-  <link rel="apple-touch-icon" href="/assets/icons/apple-touch-icon.png">
-  <link rel="manifest" href="/assets/icons/site.webmanifest">
-  <link rel="icon" href="/assets/icons/favicon.ico?v=1">
-  <link rel="preload" href="/assets/css/style.css" as="style">
-  <link rel="preload" href="/assets/js/main.js" as="script">
-  <link rel="stylesheet" href="/assets/css/style.css">
 </head>
 <body class="app-body">
   <div class="utility-bar">
+    <div class="app-nav shell-panel navbar-container">
+      <a class="app-brand" href="../index.html">🏠 Rental Platform</a>
+      <nav class="app-links">
+        <a href="../dashboards/tenant.html">Dashboard</a>
+        <a href="../pages/property-list.html">My Rentals</a>
+        <a href="../pages/payments.html">Payments</a>
+        <a href="../pages/maintenance.html">Maintenance</a>
+        <a href="../pages/profile.html">Profile</a>
+      </nav>
+    </div>
   </div>
+
   <main class="dashboard-layout dashboard-layout--full">
     <section class="dashboard-shell">
-      <section class="page-card">
-        <div class="dashboard-hero">
-          <div><h1 class="section-title">Tenant Dashboard</h1><p>Recommended homes near you and recently added properties.</p></div>
-          <a class="btn btn-primary" href="../pages/property-list.html">Explore Homes</a>
-        </div>
-        <div class="kpi-grid">
-          <article class="kpi-card metric-card"><div class="kpi-head"><span class="kpi-icon">🏠</span><p class="kpi-label">Available Properties</p></div><p class="kpi-value" id="availablePropertyCount">0</p></article>
-          <article class="kpi-card metric-card"><div class="kpi-head"><span class="kpi-icon">💜</span><p class="kpi-label">Wishlist</p></div><p class="kpi-value" id="wishlistCount">0</p></article>
-          <article class="kpi-card metric-card"><div class="kpi-head"><span class="kpi-icon">👁</span><p class="kpi-label">Recently Viewed</p></div><p class="kpi-value" id="recentCount">0</p></article>
-          <article class="kpi-card metric-card"><div class="kpi-head"><span class="kpi-icon">✅</span><p class="kpi-label">Profile Status</p></div><p class="kpi-value" id="tenantProfileStatus">Incomplete</p></article>
-        </div>
+      <section id="tenantProfilePrompt" class="page-card" hidden>
+        <h3 class="section-title">Complete your profile to unlock all features.</h3>
+        <a class="btn btn-primary" href="../pages/profile.html">Complete Profile</a>
       </section>
 
-      <section class="page-card split-grid">
-        <div id="tenantProfileSection">
-          <h3 class="section-title">Complete tenant profile</h3>
-          <form id="tenantProfileForm" class="form-grid">
-            <div><label for="tenantPhone">Phone</label><input id="tenantPhone" type="text" required /></div>
-            <div><label for="aadhaarNo">Aadhaar No</label><input id="aadhaarNo" type="text" required /></div>
-            <div><label for="occupation">Occupation</label><input id="occupation" type="text" required /></div>
-            <div><label for="tenantCity">City</label><input id="tenantCity" type="text" required /></div>
-            <div class="full"><label for="permanentAddress">Permanent Address</label><input id="permanentAddress" type="text" required /></div>
-            <div class="full"><button class="btn btn-primary" type="submit">Save Profile</button></div>
-          </form>
-        </div>
-        <div>
-          <h3 class="section-title">Suggested properties</h3>
-          <p class="section-subtitle">Curated homes with high-quality previews based on your preferred city.</p>
-          <div id="tenantRecommendations" class="property-grid"></div>
+      <section class="page-card">
+        <h1 class="section-title">Tenant Dashboard</h1>
+        <div class="kpi-grid">
+          <article class="kpi-card metric-card"><p class="kpi-label">Active Rental</p><p class="kpi-value" id="tenantActiveRental">0</p></article>
+          <article class="kpi-card metric-card"><p class="kpi-label">Upcoming Payment</p><p class="kpi-value" id="tenantUpcomingPayment">₹0</p></article>
+          <article class="kpi-card metric-card"><p class="kpi-label">Maintenance Requests</p><p class="kpi-value" id="tenantMaintenanceRequests">0</p></article>
+          <article class="kpi-card metric-card"><p class="kpi-label">Rental Agreement Status</p><p class="kpi-value" id="tenantAgreementStatus">No Active Agreement</p></article>
+          <article class="kpi-card metric-card"><p class="kpi-label">Recent Notifications</p><p class="kpi-value" id="tenantRecentNotifications">0</p></article>
         </div>
       </section>
     </section>
   </main>
-  <script type="module" src="../js/core/toast.js"></script>
-<script type="module" src="../js/modules/tenant.js"></script>
-<script type="module" src="../js/modules/appShell.js"></script>
-  <script src="/assets/js/main.js" defer></script>
+  <script type="module" src="../js/authGuard.js"></script>
+  <script type="module" src="../js/modules/tenant.js"></script>
 </body>
 </html>

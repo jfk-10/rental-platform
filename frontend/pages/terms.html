@@ -6,45 +6,26 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link rel="stylesheet" href="../css/global.css" />
   <link rel="stylesheet" href="../css/forms.css" />
-  <link rel="apple-touch-icon" href="/assets/icons/apple-touch-icon.png">
-  <link rel="manifest" href="/assets/icons/site.webmanifest">
-  <link rel="icon" href="/assets/icons/favicon.ico?v=1">
-  <link rel="preload" href="/assets/css/style.css" as="style">
-  <link rel="preload" href="/assets/js/main.js" as="script">
-  <link rel="stylesheet" href="/assets/css/style.css">
 </head>
 <body class="app-body">
-  <div class="utility-bar"></div>
-  <main class="page-shell content-stack">
-    <section class="page-card">
-      <h1 class="section-title">Terms & Conditions</h1>
-      <p class="section-subtitle">These terms outline safe and responsible use of Rental Platform for all participants.</p>
-
-      <div class="terms-grid">
-        <article class="terms-section-card">
-          <h2>Usage Rules</h2>
-          <p>All listings must include accurate property addresses, rental amounts, and occupancy status so users can make informed decisions.</p>
-        </article>
-
-        <article class="terms-section-card">
-          <h2>User Responsibilities</h2>
-          <p>Users must maintain authentic profile information and comply with all applicable housing and rental regulations in their region.</p>
-        </article>
-
-        <article class="terms-section-card">
-          <h2>Agreement Policies</h2>
-          <p>Agreements, rent payments, and key transaction history should be recorded on-platform for transparency and accountability.</p>
-        </article>
-
-        <article class="terms-section-card">
-          <h2>Security and Compliance</h2>
-          <p>Fraud, abuse, and spam are prohibited and may result in immediate suspension. Using the platform indicates acceptance of these policies.</p>
-        </article>
+  <div class="utility-bar">
+    <nav class="landing-nav shell-panel">
+      <strong class="brand-mark">🏠 Rental Platform</strong>
+      <div class="landing-links">
+        <a href="../index.html">Home</a>
+        <a href="../pages/about.html">About</a>
+        <a href="../pages/discover.html">Discover</a>
+        <a href="../pages/terms.html">Terms</a>
       </div>
-    </section>
+      <div class="actions-row nav-actions">
+        <a id="loginBtn" class="btn btn-secondary" href="../pages/login.html">Login</a>
+        <a id="signupBtn" class="btn btn-primary" href="../pages/register.html">Sign up</a>
+      </div>
+    </nav>
+  </div>
+  <main class="page-shell content-stack">
+    <section class="page-card"><h1 class="section-title">Terms & Conditions</h1><p class="section-subtitle">These terms outline safe and responsible use of Rental Platform for all participants.</p></section>
   </main>
-  <script type="module" src="../js/core/toast.js"></script>
-<script type="module" src="../js/modules/appShell.js"></script>
-  <script src="/assets/js/main.js" defer></script>
+  <script type="module" src="../js/authGuard.js"></script>
 </body>
 </html>

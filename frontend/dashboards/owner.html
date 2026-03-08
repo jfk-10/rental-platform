@@ -7,75 +7,42 @@
   <link rel="stylesheet" href="../css/global.css" />
   <link rel="stylesheet" href="../css/forms.css" />
   <link rel="stylesheet" href="../css/dashboard.css" />
-  <link rel="apple-touch-icon" href="/assets/icons/apple-touch-icon.png">
-  <link rel="manifest" href="/assets/icons/site.webmanifest">
-  <link rel="icon" href="/assets/icons/favicon.ico?v=1">
-  <link rel="preload" href="/assets/css/style.css" as="style">
-  <link rel="preload" href="/assets/js/main.js" as="script">
-  <link rel="stylesheet" href="/assets/css/style.css">
 </head>
 <body class="app-body">
   <div class="utility-bar">
+    <div class="app-nav shell-panel navbar-container">
+      <a class="app-brand" href="../index.html">🏠 Rental Platform</a>
+      <nav class="app-links">
+        <a href="../dashboards/owner.html">Dashboard</a>
+        <a href="../pages/property-list.html">Properties</a>
+        <a href="../pages/agreements.html">Agreements</a>
+        <a href="../pages/payments.html">Payments</a>
+        <a href="../pages/maintenance.html">Maintenance</a>
+        <a href="../pages/profile.html">Profile</a>
+      </nav>
+    </div>
   </div>
+
   <main class="dashboard-layout dashboard-layout--full">
     <section class="dashboard-shell">
+      <section id="ownerProfilePrompt" class="page-card" hidden>
+        <h3 class="section-title">Complete your profile to unlock all features.</h3>
+        <a class="btn btn-primary" href="../pages/profile.html">Complete Profile</a>
+      </section>
+
       <section class="page-card">
-        <div class="dashboard-hero">
-          <div>
-            <h1 class="section-title">Owner Dashboard</h1>
-            <p>Track listings, profile completion, and publishing status in one place.</p>
-          </div>
-          <a class="btn btn-primary" href="../pages/add-property.html">+ Add Listing</a>
-        </div>
+        <h1 class="section-title">Owner Dashboard</h1>
         <div class="kpi-grid">
-          <article class="kpi-card metric-card"><div class="kpi-head"><span class="kpi-icon" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M4 10.5 12 4l8 6.5V20a1 1 0 0 1-1 1h-4v-6H9v6H5a1 1 0 0 1-1-1v-9.5Z" stroke="#475569" stroke-width="1.7"/></svg></span><p class="kpi-label">Total Properties</p></div><p class="kpi-value" id="ownerPropertyCount">0</p></article>
-          <article class="kpi-card metric-card"><div class="kpi-head"><span class="kpi-icon" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M7 12h10M7 8h10M7 16h6" stroke="#475569" stroke-width="1.7" stroke-linecap="round"/></svg></span><p class="kpi-label">Rented Properties</p></div><p class="kpi-value" id="ownerRentedCount">0</p></article>
-          <article class="kpi-card metric-card"><div class="kpi-head"><span class="kpi-icon" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M12 3v18M16 7.5c0-1.7-1.8-3-4-3s-4 1.3-4 3 1.8 3 4 3 4 1.3 4 3-1.8 3-4 3-4-1.3-4-3" stroke="#475569" stroke-width="1.7" stroke-linecap="round"/></svg></span><p class="kpi-label">Estimated Monthly Income</p></div><p class="kpi-value" id="ownerIncome">₹0</p></article>
-          <article class="kpi-card metric-card"><div class="kpi-head"><span class="kpi-icon" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="m9 12 2 2 4-4M12 22c5.5 0 10-4.5 10-10S17.5 2 12 2 2 6.5 2 12s4.5 10 10 10Z" stroke="#475569" stroke-width="1.7" stroke-linecap="round"/></svg></span><p class="kpi-label">Profile Status</p></div><p class="kpi-value" id="ownerProfileStatus">Incomplete</p></article>
+          <article class="kpi-card metric-card"><p class="kpi-label">Total Properties</p><p class="kpi-value" id="ownerTotalProperties">0</p></article>
+          <article class="kpi-card metric-card"><p class="kpi-label">Active Agreements</p><p class="kpi-value" id="ownerActiveAgreements">0</p></article>
+          <article class="kpi-card metric-card"><p class="kpi-label">Monthly Rental Income</p><p class="kpi-value" id="ownerMonthlyIncome">₹0</p></article>
+          <article class="kpi-card metric-card"><p class="kpi-label">Maintenance Requests</p><p class="kpi-value" id="ownerMaintenanceRequests">0</p></article>
+          <article class="kpi-card metric-card"><p class="kpi-label">Recent Tenant Activity</p><p class="kpi-value" id="ownerRecentActivity">0</p></article>
         </div>
-      </section>
-
-      <section id="ownerProfileSection" class="page-card split-grid">
-        <div>
-          <h3 class="section-title">Complete owner profile</h3>
-          <p class="section-subtitle">Complete your profile to publish properties and manage agreements.</p>
-          <form id="ownerProfileForm" class="form-grid">
-            <div><label for="ownerPhone">Phone</label><input id="ownerPhone" type="text" required /></div>
-            <div><label for="ownerType">Owner Type</label><select id="ownerType" required><option value="Local">Local</option><option value="NRI">NRI</option></select></div>
-            <div><label for="ownerCity">City</label><input id="ownerCity" type="text" required /></div>
-            <div class="full"><label for="ownerAddress">Address</label><input id="ownerAddress" type="text" required /></div>
-            <div class="full"><button class="btn btn-primary" type="submit">Save Profile</button></div>
-          </form>
-        </div>
-        <div>
-          <h3 class="section-title">Property previews</h3>
-          <div id="ownerPropertyPreview" class="property-grid"></div>
-        </div>
-      </section>
-
-      <section class="page-card">
-        <h3 class="section-title">Quick Add Property</h3>
-        <p class="section-subtitle">Create a listing directly from your dashboard and upload photos right away.</p>
-        <form id="ownerQuickPropertyForm" class="form-grid">
-          <div><label for="quickTitle">Title</label><input type="text" id="quickTitle" required /></div>
-          <div><label for="quickPropertyType">Property Type</label><input type="text" id="quickPropertyType" required /></div>
-          <div><label for="quickCity">City</label><input type="text" id="quickCity" required /></div>
-          <div><label for="quickRent">Monthly Rent</label><input type="text" inputmode="numeric" id="quickRent" required /></div>
-          <div class="full"><label for="quickAddress">Address</label><input type="text" id="quickAddress" required /></div>
-          <div><label for="quickStatus">Status</label><select id="quickStatus"><option value="Available">Available</option><option value="Rented">Rented</option><option value="Inactive">Inactive</option></select></div>
-          <div class="full">
-            <label for="quickPropertyImages">Property Images</label>
-            <input type="file" id="quickPropertyImages" accept="image/*" multiple />
-            <div id="ownerQuickGalleryPreview" class="gallery-preview"></div>
-          </div>
-          <div class="full"><button class="btn btn-primary" type="submit">Publish Property</button></div>
-        </form>
       </section>
     </section>
   </main>
-  <script type="module" src="../js/core/toast.js"></script>
-<script type="module" src="../js/modules/owner.js"></script>
-<script type="module" src="../js/modules/appShell.js"></script>
-  <script src="/assets/js/main.js" defer></script>
+  <script type="module" src="../js/authGuard.js"></script>
+  <script type="module" src="../js/modules/owner.js"></script>
 </body>
 </html>

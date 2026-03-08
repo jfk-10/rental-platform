@@ -47,7 +47,10 @@ if (form) {
         name: fullName,
         email,
         password,
-        role
+        role,
+        phone: null,
+        city: null,
+        profile_completed: false
       });
 
       if (profileError) {
