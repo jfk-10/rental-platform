@@ -8,12 +8,12 @@ if (form) {
   form.addEventListener("submit", async (event) => {
     event.preventDefault();
 
-    const name = document.getElementById("name").value.trim();
+    const fullName = document.getElementById("name").value.trim();
     const email = document.getElementById("email").value.trim().toLowerCase();
     const password = document.getElementById("password").value;
     const role = document.getElementById("role").value;
 
-    if (!name || !email || !password || !role) {
+    if (!fullName || !email || !password || !role) {
       showToast("Please fill all required fields", "error");
       return;
     }
@@ -27,41 +27,40 @@ if (form) {
     submitBtn.disabled = true;
     submitBtn.textContent = "Registering...";
 
-    const { data, error } = await supabaseClient.auth.signUp({
-      email,
-      password
-    });
+    try {
+      const { data, error: signUpError } = await supabaseClient.auth.signUp({
+        email,
+        password
+      });
 
-    if (error) {
-      submitBtn.disabled = false;
-      submitBtn.textContent = "Register";
+      if (signUpError) {
+        throw new Error(signUpError.message || "Registration failed");
+      }
+
+      const authUserId = data?.user?.id;
+      if (!authUserId) {
+        throw new Error("Unable to create account. Please try again.");
+      }
+
+      const { error: profileError } = await supabaseClient.from("users").insert({
+        auth_user_id: authUserId,
+        name: fullName,
+        email,
+        password,
+        role
+      });
+
+      if (profileError) {
+        throw new Error(profileError.message || "Profile setup failed");
+      }
+
+      setFlashMessage("Registration successful", "success", "auth");
+      window.location.href = "/pages/login.html";
+    } catch (error) {
       showToast(error.message || "Registration failed", "error");
-      return;
-    }
-
-    const authUserId = data?.user?.id;
-    if (!authUserId) {
+    } finally {
       submitBtn.disabled = false;
       submitBtn.textContent = "Register";
-      showToast("Unable to create account. Please try again.", "error");
-      return;
     }
-
-    const { error: profileError } = await supabaseClient.from("users").insert({
-      user_id: authUserId,
-      name,
-      email,
-      role
-    });
-
-    if (profileError) {
-      submitBtn.disabled = false;
-      submitBtn.textContent = "Register";
-      showToast(profileError.message || "Profile setup failed", "error");
-      return;
-    }
-
-    setFlashMessage("Registration successful", "success", "auth");
-    window.location.href = "/pages/login.html";
   });
 }

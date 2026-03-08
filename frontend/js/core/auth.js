@@ -1,11 +1,11 @@
 import supabaseClient from "./supabaseClient.js";
 import { setFlashMessage } from "../utils/helpers.js";
 
-async function fetchAppUserById(userId) {
+async function fetchAppUserByAuthId(authUserId) {
   return supabaseClient
     .from("users")
-    .select("user_id,name,email,role")
-    .eq("user_id", userId)
+    .select("user_id,name,email,role,auth_user_id")
+    .eq("auth_user_id", authUserId)
     .single();
 }
 
@@ -18,7 +18,7 @@ export async function getCurrentUser() {
     return null;
   }
 
-  const { data: user } = await fetchAppUserById(session.user.id);
+  const { data: user } = await fetchAppUserByAuthId(session.user.id);
   return user || null;
 }
 
@@ -32,7 +32,7 @@ export async function requireUser(allowedRoles = []) {
     return null;
   }
 
-  const { data: user } = await fetchAppUserById(session.user.id);
+  const { data: user } = await fetchAppUserByAuthId(session.user.id);
 
   if (!user) {
     await supabaseClient.auth.signOut();
