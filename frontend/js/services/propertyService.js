@@ -2,6 +2,22 @@ import supabaseClient from "../core/supabaseClient.js";
 
 const PROPERTY_IMAGE_BUCKET = "property-images";
 
+const RESIDENTIAL_PROPERTY_TYPES = new Set(["apartment", "house", "studio"]);
+const COMMERCIAL_PROPERTY_TYPES = new Set(["office", "shop", "commercial"]);
+
+export function deriveAllowedUsage({ property_type, bedrooms = 0, bathrooms = 0, office_rooms = 0, shop_units = 0 } = {}) {
+  const type = (property_type || "").trim().toLowerCase();
+  const residentialCount = Number(bedrooms || 0) + Number(bathrooms || 0);
+  const commercialCount = Number(office_rooms || 0) + Number(shop_units || 0);
+
+  if (residentialCount > 0 && commercialCount > 0) return "Mixed";
+  if (RESIDENTIAL_PROPERTY_TYPES.has(type)) return "Residential";
+  if (COMMERCIAL_PROPERTY_TYPES.has(type)) return "Commercial";
+  if (residentialCount > 0) return "Residential";
+  if (commercialCount > 0) return "Commercial";
+  return "Residential";
+}
+
 export async function listProperties({ city = "", status = "" } = {}) {
   let query = supabaseClient
     .from("properties")
@@ -43,6 +59,8 @@ export async function getPropertiesByOwner(ownerId) {
 }
 
 export async function createProperty(payload) {
+  const usage = deriveAllowedUsage(payload);
+
   const insertPayload = {
     owner_id: payload.owner_id ?? Number(localStorage.getItem("userId")),
     title: payload.title,
@@ -50,7 +68,7 @@ export async function createProperty(payload) {
     address: payload.address,
     city: payload.city,
     rent_amount: payload.rent_amount,
-    allowed_usage: payload.allowed_usage,
+    allowed_usage: usage,
     status: payload.status
   };
 
@@ -84,6 +102,15 @@ export async function updateProperty(propertyId, payload) {
 }
 
 export async function deleteProperty(propertyId) {
+  const { error: imageDeleteError } = await supabaseClient
+    .from("property_images")
+    .delete()
+    .eq("property_id", propertyId);
+
+  if (imageDeleteError) {
+    return { error: imageDeleteError };
+  }
+
   return supabaseClient.from("properties").delete().eq("property_id", propertyId);
 }
 
