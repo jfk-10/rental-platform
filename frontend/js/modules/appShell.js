@@ -1,15 +1,5 @@
-import supabaseClient from "../core/supabaseClient.js";
+import { getStoredUser, syncStoredUserWithSession, updateNavbarAuthState, watchAuthState, logout } from "../core/auth.js";
 import { enforceAmountInputValidation } from "../utils/helpers.js";
-
-function getStoredUser() {
-  const raw = localStorage.getItem("user");
-  if (!raw) return null;
-  try {
-    return JSON.parse(raw);
-  } catch {
-    return null;
-  }
-}
 
 function getBasePrefix() {
   const path = window.location.pathname;
@@ -74,23 +64,9 @@ function buildLink(prefix, [label, href]) {
   return `<a class="${active ? "active" : ""}" href="${fullHref}">${label}</a>`;
 }
 
-async function renderUtilityBar() {
+function renderUtilityBarForUser(user) {
   const utility = document.querySelector(".utility-bar");
   if (!utility) return;
-
-  const {
-    data: { session }
-  } = await supabaseClient.auth.getSession();
-
-  const storedUser = getStoredUser();
-  const user = session && storedUser ? storedUser : null;
-
-  if (!session && storedUser) {
-    localStorage.removeItem("user");
-    localStorage.removeItem("userId");
-    localStorage.removeItem("role");
-    localStorage.removeItem("name");
-  }
 
   const role = user?.role;
   const prefix = getBasePrefix();
@@ -105,20 +81,33 @@ async function renderUtilityBar() {
       <div class="app-nav-menu">
         <nav class="app-links">${links}</nav>
         <div class="app-user-actions">
+          <span data-auth="name" class="app-auth-name" hidden></span>
+          <a data-auth="login" class="btn btn-secondary" href="${prefix}pages/login.html">Login</a>
+          <a data-auth="signup" class="btn btn-primary" href="${prefix}pages/register.html">Sign up</a>
+          <button data-auth="logout" id="logoutBtn" class="btn btn-danger" type="button" hidden>Logout</button>
           ${
             user
-              ? `<button type="button" id="profileNavBtn" class="app-profile-link profile-btn"><span class="app-avatar" aria-hidden="true">${initials}</span><span class="app-profile-meta"><span>Profile</span><span class="role-badge ${getRoleBadgeClass(role)}">${roleLabel}</span></span></button>`
-              : `<a class="btn btn-secondary" href="${prefix}pages/login.html">Login</a><a class="btn btn-primary" href="${prefix}pages/register.html">Sign up</a>`
+              ? `<button type="button" id="profileNavBtn" class="app-profile-link profile-btn"><span class="app-avatar" aria-hidden="true">${initials}</span><span class="app-profile-meta"><span>${user.name || "Profile"}</span><span class="role-badge ${getRoleBadgeClass(role)}">${roleLabel}</span></span></button>`
+              : ""
           }
         </div>
       </div>
     </div>
   `;
 
+  updateNavbarAuthState(utility, user);
+
   const profileButton = document.getElementById("profileNavBtn");
   if (profileButton) {
     profileButton.addEventListener("click", () => {
       window.location.href = `${prefix}pages/profile.html`;
+    });
+  }
+
+  const logoutButton = document.getElementById("logoutBtn");
+  if (logoutButton) {
+    logoutButton.addEventListener("click", () => {
+      void logout();
     });
   }
 
@@ -142,6 +131,15 @@ async function renderUtilityBar() {
     });
   }
 }
+
+async function renderUtilityBar() {
+  await syncStoredUserWithSession();
+  renderUtilityBarForUser(getStoredUser());
+}
+
+watchAuthState((user) => {
+  renderUtilityBarForUser(user || getStoredUser());
+});
 
 void renderUtilityBar();
 enforceAmountInputValidation();

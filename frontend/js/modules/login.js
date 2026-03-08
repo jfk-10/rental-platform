@@ -1,4 +1,5 @@
 import supabaseClient from "../core/supabaseClient.js";
+import { storeUserSession, syncStoredUserWithSession } from "../core/auth.js";
 import { renderFlashMessage, setFlashMessage, showToast } from "../utils/helpers.js";
 
 const form = document.getElementById("loginForm");
@@ -22,32 +23,14 @@ function redirectToRoleDashboard(role) {
   window.location.href = dashboardPath;
 }
 
-async function resolveRoleByEmail(email) {
-  return supabaseClient.from("users").select("role").eq("email", email).single();
+async function resolveProfileByEmail(email) {
+  return supabaseClient.from("users").select("user_id,name,role").eq("email", email).single();
 }
 
 async function handleExistingSession() {
-  const {
-    data: { session }
-  } = await supabaseClient.auth.getSession();
-
-  if (!session) return;
-
-  const email = session.user?.email?.trim().toLowerCase();
-  if (!email) {
-    await supabaseClient.auth.signOut();
-    return;
-  }
-
-  const { data: profile, error } = await resolveRoleByEmail(email);
-
-  if (error || !profile?.role) {
-    await supabaseClient.auth.signOut();
-    showToast(error?.message || "Unable to load account profile", "error");
-    return;
-  }
-
-  redirectToRoleDashboard(profile.role);
+  const user = await syncStoredUserWithSession();
+  if (!user?.role) return;
+  redirectToRoleDashboard(user.role);
 }
 
 void handleExistingSession();
@@ -68,19 +51,19 @@ if (form) {
     submitBtn.disabled = true;
     submitBtn.textContent = "Logging in...";
 
-    const { error } = await supabaseClient.auth.signInWithPassword({
+    const { data, error } = await supabaseClient.auth.signInWithPassword({
       email,
       password
     });
 
-    if (error) {
+    if (error || !data?.user) {
       submitBtn.disabled = false;
       submitBtn.textContent = "Login";
-      showToast(error.message || "Login failed", "error");
+      showToast(error?.message || "Login failed", "error");
       return;
     }
 
-    const { data: profile, error: profileError } = await resolveRoleByEmail(email);
+    const { data: profile, error: profileError } = await resolveProfileByEmail(email);
 
     if (profileError || !profile?.role) {
       await supabaseClient.auth.signOut();
@@ -90,6 +73,7 @@ if (form) {
       return;
     }
 
+    storeUserSession(data.user, profile);
     redirectToRoleDashboard(profile.role);
   });
 }
