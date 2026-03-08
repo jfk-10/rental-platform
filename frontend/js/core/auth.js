@@ -30,14 +30,6 @@ function clearStoredUser() {
   localStorage.removeItem("name");
 }
 
-async function refreshSession() {
-  const {
-    data: { session }
-  } = await supabaseClient.auth.getSession();
-  cachedSession = session;
-  return session;
-}
-
 export function getCurrentUser() {
   const user = getStoredUser();
 
@@ -49,22 +41,22 @@ export function getCurrentUser() {
   return user;
 }
 
-export function requireUser(allowedRoles = []) {
+export async function requireUser(allowedRoles = []) {
   const user = getStoredUser();
 
-  if (!user) {
+  const {
+    data: { session }
+  } = await supabaseClient.auth.getSession();
+
+  cachedSession = session;
+
+  if (!session) {
+    clearStoredUser();
     window.location.href = "../pages/login.html";
     return null;
   }
 
-  if (!cachedSession) {
-    void refreshSession().then((session) => {
-      if (!session) {
-        clearStoredUser();
-        window.location.href = "../pages/login.html";
-      }
-    });
-
+  if (!user) {
     clearStoredUser();
     window.location.href = "../pages/login.html";
     return null;

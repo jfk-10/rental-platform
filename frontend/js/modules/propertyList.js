@@ -2,7 +2,7 @@ import { requireUser } from "../core/auth.js";
 import { listProperties, getPropertiesByOwnerUserId, deleteProperty, updateProperty, PROPERTY_IMAGE_PLACEHOLDER } from "../services/propertyService.js";
 import { formatCurrency, showToast } from "../utils/helpers.js";
 
-const user = requireUser(["admin", "owner", "tenant"]);
+const user = await requireUser(["admin", "owner", "tenant"]);
 if (!user) throw new Error("Unauthorized");
 
 const cityFilter = document.getElementById("cityFilter");
