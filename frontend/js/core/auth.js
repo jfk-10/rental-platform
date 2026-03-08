@@ -1,5 +1,5 @@
 import supabaseClient from "./supabaseClient.js";
-import { getUserByAuthId } from "../services/userService.js";
+import { getUserByEmail } from "../services/userService.js";
 
 function getLoginPath() {
   return "../pages/login.html";
@@ -64,7 +64,7 @@ export async function syncStoredUserWithSession() {
 
   localStorage.setItem("user", JSON.stringify(session.user));
 
-  const { data: appUser } = await getUserByAuthId(session.user.id);
+  const { data: appUser } = await getUserByEmail(session.user.email);
   if (!appUser) {
     clearStoredUser();
     return null;

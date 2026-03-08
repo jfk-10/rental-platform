@@ -1,4 +1,5 @@
 import supabaseClient from "../core/supabaseClient.js";
+import { getUserByEmail } from "../services/userService.js";
 import { renderFlashMessage, showToast } from "../utils/helpers.js";
 
 const form = document.getElementById("loginForm");
@@ -9,14 +10,6 @@ function getDashboardPath(role) {
   if (role === "owner") return "../dashboards/owner.html";
   if (role === "tenant") return "../dashboards/tenant.html";
   return null;
-}
-
-async function getProfileByAuthId(authUserId) {
-  return supabaseClient
-    .from("users")
-    .select("user_id,name,email,role,phone,city,profile_completed")
-    .eq("auth_user_id", authUserId)
-    .single();
 }
 
 if (form) {
@@ -34,7 +27,7 @@ if (form) {
 
     localStorage.setItem("user", JSON.stringify(data.user));
 
-    const { data: appUser, error: profileError } = await getProfileByAuthId(data.user.id);
+    const { data: appUser, error: profileError } = await getUserByEmail(email);
     if (profileError || !appUser?.role) {
       showToast(profileError?.message || "Unable to load account profile", "error");
       return;

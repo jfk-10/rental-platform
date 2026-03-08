@@ -1,5 +1,42 @@
 import supabaseClient from "../core/supabaseClient.js";
 
+function buildProfile(userData, roleData = null) {
+  const phone = roleData?.phone || null;
+  const city = roleData?.city || null;
+
+  return {
+    ...userData,
+    ...(roleData || {}),
+    phone,
+    city,
+    profile_completed: Boolean(phone && city)
+  };
+}
+
+async function getRoleProfileByUserId(userId, role) {
+  if (role === "owner") {
+    const { data, error } = await supabaseClient
+      .from("owners")
+      .select("phone,address,city,owner_type")
+      .eq("user_id", Number(userId))
+      .maybeSingle();
+
+    return { data, error };
+  }
+
+  if (role === "tenant") {
+    const { data, error } = await supabaseClient
+      .from("tenants")
+      .select("phone,occupation,permanent_address,city")
+      .eq("user_id", Number(userId))
+      .maybeSingle();
+
+    return { data, error };
+  }
+
+  return { data: null, error: null };
+}
+
 export async function getOwners() {
   return supabaseClient
     .from("owners")
@@ -29,18 +66,68 @@ export async function getTenantByUserId(userId) {
 }
 
 export async function getAllUsers() {
-  return supabaseClient
+  const { data: users, error } = await supabaseClient
     .from("users")
-    .select("user_id,name,email,role,phone,city,profile_completed,created_at")
+    .select("user_id,name,email,role,created_at")
     .order("user_id", { ascending: true });
+
+  if (error || !users) return { data: null, error };
+
+  const ownerUserIds = users.filter((item) => item.role === "owner").map((item) => item.user_id);
+  const tenantUserIds = users.filter((item) => item.role === "tenant").map((item) => item.user_id);
+
+  const [{ data: owners, error: ownersError }, { data: tenants, error: tenantsError }] = await Promise.all([
+    ownerUserIds.length
+      ? supabaseClient.from("owners").select("user_id,phone,address,city,owner_type").in("user_id", ownerUserIds)
+      : Promise.resolve({ data: [], error: null }),
+    tenantUserIds.length
+      ? supabaseClient.from("tenants").select("user_id,phone,occupation,permanent_address,city").in("user_id", tenantUserIds)
+      : Promise.resolve({ data: [], error: null })
+  ]);
+
+  if (ownersError || tenantsError) {
+    return { data: null, error: ownersError || tenantsError };
+  }
+
+  const ownersByUserId = new Map((owners || []).map((item) => [item.user_id, item]));
+  const tenantsByUserId = new Map((tenants || []).map((item) => [item.user_id, item]));
+
+  return {
+    data: users.map((user) => {
+      if (user.role === "owner") return buildProfile(user, ownersByUserId.get(user.user_id));
+      if (user.role === "tenant") return buildProfile(user, tenantsByUserId.get(user.user_id));
+      return buildProfile(user, null);
+    }),
+    error: null
+  };
+}
+
+export async function getUserByEmail(email) {
+  const normalizedEmail = String(email || "").trim().toLowerCase();
+
+  const { data: userData, error: userError } = await supabaseClient
+    .from("users")
+    .select("user_id,name,email,role")
+    .eq("email", normalizedEmail)
+    .single();
+
+  if (userError || !userData) return { data: null, error: userError };
+
+  const { data: roleData, error: roleError } = await getRoleProfileByUserId(userData.user_id, userData.role);
+  if (roleError) return { data: null, error: roleError };
+
+  return { data: buildProfile(userData, roleData), error: null };
 }
 
 export async function getUserByAuthId(authUserId) {
-  return supabaseClient
-    .from("users")
-    .select("user_id,auth_user_id,name,email,role,phone,city,profile_completed")
-    .eq("auth_user_id", authUserId)
-    .maybeSingle();
+  const { data, error } = await supabaseClient.auth.getUser(authUserId);
+  const email = data?.user?.email;
+
+  if (error || !email) {
+    return { data: null, error: error || { message: "Unable to resolve auth user email" } };
+  }
+
+  return getUserByEmail(email);
 }
 
 export async function updateUserProfile(userId, payload) {
@@ -48,15 +135,14 @@ export async function updateUserProfile(userId, payload) {
     .from("users")
     .update(payload)
     .eq("user_id", Number(userId))
-    .select("user_id,auth_user_id,name,email,role,phone,city,profile_completed")
+    .select("user_id,name,email,role")
     .single();
 }
 
 export async function saveOwnerProfile(userId, payload) {
   const parsedUserId = Number(userId);
-  const profileCompleted = Boolean(payload.name && payload.phone && payload.city);
 
-  const { error } = await supabaseClient
+  const { error: ownerError } = await supabaseClient
     .from("owners")
     .upsert({
       user_id: parsedUserId,
@@ -66,21 +152,21 @@ export async function saveOwnerProfile(userId, payload) {
       owner_type: payload.owner_type || "Local"
     }, { onConflict: "user_id" });
 
-  if (error) return { data: null, error };
+  if (ownerError) return { data: null, error: ownerError };
 
-  return updateUserProfile(parsedUserId, {
-    name: payload.name,
-    phone: payload.phone,
-    city: payload.city,
-    profile_completed: profileCompleted
+  const { error: userError } = await updateUserProfile(parsedUserId, {
+    name: payload.name
   });
+
+  if (userError) return { data: null, error: userError };
+
+  return getUserByEmail(payload.email);
 }
 
 export async function saveTenantProfile(userId, payload) {
   const parsedUserId = Number(userId);
-  const profileCompleted = Boolean(payload.name && payload.phone && payload.city);
 
-  const { error } = await supabaseClient
+  const { error: tenantError } = await supabaseClient
     .from("tenants")
     .upsert({
       user_id: parsedUserId,
@@ -91,12 +177,13 @@ export async function saveTenantProfile(userId, payload) {
       permanent_address: payload.permanent_address || null
     }, { onConflict: "user_id" });
 
-  if (error) return { data: null, error };
+  if (tenantError) return { data: null, error: tenantError };
 
-  return updateUserProfile(parsedUserId, {
-    name: payload.name,
-    phone: payload.phone,
-    city: payload.city,
-    profile_completed: profileCompleted
+  const { error: userError } = await updateUserProfile(parsedUserId, {
+    name: payload.name
   });
+
+  if (userError) return { data: null, error: userError };
+
+  return getUserByEmail(payload.email);
 }

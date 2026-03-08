@@ -1,5 +1,6 @@
 import supabaseClient from "./core/supabaseClient.js";
 import { logout as logoutSession } from "./core/auth.js";
+import { getUserByEmail } from "./services/userService.js";
 import { showToast } from "./utils/helpers.js";
 
 const authUser = JSON.parse(localStorage.getItem("user") || "null");
@@ -56,27 +57,32 @@ profileForm.addEventListener("submit", async (event) => {
     return;
   }
 
-  const { data, error } = await supabaseClient
-    .from("users")
-    .update({
-      phone,
-      city,
-      profile_completed: true
-    })
-    .eq("auth_user_id", authUser.id)
-    .select("user_id,auth_user_id,name,email,role,phone,city,profile_completed")
-    .single();
+  const tableName = appUser.role === "owner" ? "owners" : appUser.role === "tenant" ? "tenants" : null;
+  if (!tableName) {
+    showToast("Only owner or tenant profiles can be updated here", "error");
+    return;
+  }
 
-  if (error || !data) {
+  const { error } = await supabaseClient
+    .from(tableName)
+    .upsert({ user_id: appUser.user_id, phone, city }, { onConflict: "user_id" });
+
+  if (error) {
     showToast(error?.message || "Failed to update profile", "error");
     return;
   }
 
-  localStorage.setItem("appUser", JSON.stringify(data));
-  localStorage.setItem("userId", String(data.user_id));
-  localStorage.setItem("role", data.role || "");
+  const { data: mergedProfile, error: mergedError } = await getUserByEmail(appUser.email);
+  if (mergedError || !mergedProfile) {
+    showToast(mergedError?.message || "Failed to refresh profile", "error");
+    return;
+  }
 
-  renderProfile(data);
+  localStorage.setItem("appUser", JSON.stringify(mergedProfile));
+  localStorage.setItem("userId", String(mergedProfile.user_id));
+  localStorage.setItem("role", mergedProfile.role || "");
+
+  renderProfile(mergedProfile);
   setEditMode(false);
   showToast("Profile updated successfully", "success");
 });
