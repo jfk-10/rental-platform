@@ -4,9 +4,11 @@
   </div>
 
   <div class="nav-right">
-    <span id="welcomeUser" data-auth="name" hidden></span>
-    <a href="../pages/login.html" class="btn btn-secondary" data-auth="login">Login</a>
-    <a href="../pages/register.html" class="btn btn-primary" data-auth="signup">Sign up</a>
+    <a id="loginBtn" href="../pages/login.html" class="btn btn-secondary" data-auth="login">Login</a>
+    <a id="signupBtn" href="../pages/register.html" class="btn btn-primary" data-auth="signup">Sign up</a>
+    <a id="userProfile" href="../pages/profile.html" class="btn btn-secondary" hidden>
+      <span id="userName" data-auth="name"></span>
+    </a>
     <button id="logoutBtn" class="btn btn-danger" type="button" data-auth="logout" hidden>Logout</button>
   </div>
 </header>

@@ -104,18 +104,22 @@ export async function syncStoredUserWithSession() {
 export function updateNavbarAuthState(root = document, activeUser = null) {
   const user = activeUser || getStoredUser();
 
-  const loginEl = root.querySelector("[data-auth='login']");
-  const signUpEl = root.querySelector("[data-auth='signup']");
-  const logoutEl = root.querySelector("[data-auth='logout']");
-  const nameEl = root.querySelector("[data-auth='name']");
+  const loginEl = root.querySelector("#loginBtn") || root.querySelector("[data-auth='login']");
+  const signUpEl = root.querySelector("#signupBtn") || root.querySelector("[data-auth='signup']");
+  const logoutEl = root.querySelector("#logoutBtn") || root.querySelector("[data-auth='logout']");
+  const profileEl = root.querySelector("#userProfile");
+  const nameEl = root.querySelector("#userName") || root.querySelector("[data-auth='name']");
 
-  if (loginEl) loginEl.hidden = Boolean(user);
-  if (signUpEl) signUpEl.hidden = Boolean(user);
-  if (logoutEl) logoutEl.hidden = !user;
+  const isAuthenticated = Boolean(user);
+
+  if (loginEl) loginEl.hidden = isAuthenticated;
+  if (signUpEl) signUpEl.hidden = isAuthenticated;
+  if (logoutEl) logoutEl.hidden = !isAuthenticated;
+  if (profileEl) profileEl.hidden = !isAuthenticated;
 
   if (nameEl) {
-    nameEl.hidden = !user;
-    nameEl.textContent = user?.name ? `Hi, ${user.name}` : "";
+    nameEl.hidden = !isAuthenticated;
+    nameEl.textContent = isAuthenticated ? (user?.name || user?.email || "Profile") : "";
   }
 }
 
@@ -163,6 +167,26 @@ export async function requireUser(allowedRoles = []) {
   }
 
   return user;
+}
+
+function initializeNavbarAuth() {
+  updateNavbarAuthState(document, getStoredUser());
+
+  const logoutButton = document.getElementById("logoutBtn");
+  if (logoutButton && !logoutButton.dataset.logoutBound) {
+    logoutButton.dataset.logoutBound = "true";
+    logoutButton.addEventListener("click", () => {
+      void logout();
+    });
+  }
+
+  watchAuthState((user) => {
+    updateNavbarAuthState(document, user || getStoredUser());
+  });
+}
+
+if (typeof document !== "undefined") {
+  document.addEventListener("DOMContentLoaded", initializeNavbarAuth);
 }
 
 export async function logout() {

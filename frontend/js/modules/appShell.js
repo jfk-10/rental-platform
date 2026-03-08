@@ -81,28 +81,19 @@ function renderUtilityBarForUser(user) {
       <div class="app-nav-menu">
         <nav class="app-links">${links}</nav>
         <div class="app-user-actions">
-          <span data-auth="name" class="app-auth-name" hidden></span>
-          <a data-auth="login" class="btn btn-secondary" href="${prefix}pages/login.html">Login</a>
-          <a data-auth="signup" class="btn btn-primary" href="${prefix}pages/register.html">Sign up</a>
+          <a id="loginBtn" data-auth="login" class="btn btn-secondary" href="${prefix}pages/login.html">Login</a>
+          <a id="signupBtn" data-auth="signup" class="btn btn-primary" href="${prefix}pages/register.html">Sign up</a>
+          <a id="userProfile" href="${prefix}pages/profile.html" class="app-profile-link profile-btn" hidden>
+            <span class="app-avatar" aria-hidden="true">${initials}</span>
+            <span class="app-profile-meta"><span id="userName">${user?.name || "Profile"}</span><span class="role-badge ${getRoleBadgeClass(role)}">${roleLabel}</span></span>
+          </a>
           <button data-auth="logout" id="logoutBtn" class="btn btn-danger" type="button" hidden>Logout</button>
-          ${
-            user
-              ? `<button type="button" id="profileNavBtn" class="app-profile-link profile-btn"><span class="app-avatar" aria-hidden="true">${initials}</span><span class="app-profile-meta"><span>${user.name || "Profile"}</span><span class="role-badge ${getRoleBadgeClass(role)}">${roleLabel}</span></span></button>`
-              : ""
-          }
         </div>
       </div>
     </div>
   `;
 
   updateNavbarAuthState(utility, user);
-
-  const profileButton = document.getElementById("profileNavBtn");
-  if (profileButton) {
-    profileButton.addEventListener("click", () => {
-      window.location.href = `${prefix}pages/profile.html`;
-    });
-  }
 
   const logoutButton = document.getElementById("logoutBtn");
   if (logoutButton) {
