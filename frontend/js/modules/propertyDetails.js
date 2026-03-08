@@ -4,6 +4,14 @@ import { formatCurrency } from "../utils/helpers.js";
 const details = document.getElementById("propertyDetails");
 const propertyId = Number(new URLSearchParams(window.location.search).get("id"));
 
+const FALLBACK_IMG = "https://images.unsplash.com/photo-1560185127-6ed189bf02f4?auto=format&fit=crop&w=900&q=80";
+
+function getPropertyThumbnail(property) {
+  const firstImage = property.property_images?.find((image) => image?.image_url);
+  return firstImage?.image_url || FALLBACK_IMG;
+}
+
+
 async function loadProperty() {
   const { data, error } = await listProperties();
   if (error) {
@@ -19,7 +27,7 @@ async function loadProperty() {
 
   const gallery = property.property_images?.length
     ? property.property_images.map((img) => `<img src='${img.image_url}' alt='property image' />`).join("")
-    : "<img src='https://images.unsplash.com/photo-1560185127-6ed189bf02f4?auto=format&fit=crop&w=900&q=80' alt='property image' />";
+    : `<img src="${FALLBACK_IMG}" alt="property image" />`;
 
   const recentlyViewed = JSON.parse(localStorage.getItem("recentlyViewed") || "[]");
   if (!recentlyViewed.includes(property.property_id)) {
@@ -28,7 +36,7 @@ async function loadProperty() {
   }
 
   details.innerHTML = `
-    <img style="width:100%;max-height:460px;object-fit:cover;border-radius:14px;" src="${property.property_images?.[0]?.image_url || "https://images.unsplash.com/photo-1560185127-6ed189bf02f4?auto=format&fit=crop&w=900&q=80"}" alt="featured image" />
+    <img style="width:100%;max-height:460px;object-fit:cover;border-radius:14px;" src="${getPropertyThumbnail(property)}" alt="featured image" />
     <div style="margin-top:1rem" class="split-grid">
       <div>
         <h2>${property.title || "Property"}</h2>

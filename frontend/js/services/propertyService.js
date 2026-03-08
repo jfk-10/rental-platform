@@ -18,12 +18,16 @@ export function deriveAllowedUsage({ property_type, bedrooms = 0, bathrooms = 0,
   return "Residential";
 }
 
+const PROPERTY_SELECT_QUERY = `
+  *,
+  owners(user_id,users(name,email)),
+  property_images(image_url)
+`;
+
 export async function listProperties({ city = "", status = "" } = {}) {
   let query = supabaseClient
     .from("properties")
-    .select(
-      "property_id,owner_id,title,property_type,address,city,area_sqft,bedrooms,bathrooms,office_rooms,shop_units,rent_amount,allowed_usage,status,owners(user_id,users(name,email)),property_images(image_url)"
-    )
+    .select(PROPERTY_SELECT_QUERY)
     .order("property_id", { ascending: false });
 
   if (city) query = query.ilike("city", `%${city}%`);
@@ -49,9 +53,7 @@ export async function getPropertiesByOwnerUserId(userId, { city = "", status = "
 
   let query = supabaseClient
     .from("properties")
-    .select(
-      "property_id,owner_id,title,property_type,address,city,area_sqft,bedrooms,bathrooms,office_rooms,shop_units,rent_amount,allowed_usage,status,owners(user_id,users(name,email)),property_images(image_url)"
-    )
+    .select(PROPERTY_SELECT_QUERY)
     .eq("owner_id", owner.owner_id)
     .order("property_id", { ascending: false });
 
@@ -65,14 +67,12 @@ export async function getPropertiesByOwnerUserId(userId, { city = "", status = "
 export async function getPropertiesByOwner(ownerId) {
   return supabaseClient
     .from("properties")
-    .select(
-      "property_id,owner_id,title,property_type,address,city,area_sqft,bedrooms,bathrooms,office_rooms,shop_units,rent_amount,allowed_usage,status,owners(user_id,users(name,email)),property_images(image_url)"
-    )
+    .select(PROPERTY_SELECT_QUERY)
     .eq("owner_id", ownerId)
     .order("property_id", { ascending: false });
 }
 
-export async function createProperty(payload) {
+export async function createProperty(payload, imageFiles = []) {
   const currentUserId = Number(localStorage.getItem("userId"));
   if (!Number.isFinite(currentUserId) || currentUserId <= 0) {
     return { data: null, error: new Error("Invalid user ID") };
@@ -124,17 +124,39 @@ export async function createProperty(payload) {
     }
   }
 
-  const { data, error } = await supabaseClient
+  const { data: property, error } = await supabaseClient
     .from("properties")
     .insert([insertPayload])
-    .select()
+    .select("property_id")
     .single();
 
   if (error) {
     console.error("Property insert error:", error);
+    return { data: null, error };
   }
 
-  return { data, error };
+  if (!property?.property_id) {
+    return { data: null, error: new Error("Property created without property_id") };
+  }
+
+  for (const file of imageFiles) {
+    const imageUploadResult = await uploadPropertyImage(file, property.property_id);
+    if (imageUploadResult.error) {
+      console.error("Property image upload failed:", imageUploadResult.error);
+    }
+  }
+
+  const { data: createdProperty, error: propertyFetchError } = await supabaseClient
+    .from("properties")
+    .select(PROPERTY_SELECT_QUERY)
+    .eq("property_id", property.property_id)
+    .single();
+
+  if (propertyFetchError) {
+    return { data: property, error: propertyFetchError };
+  }
+
+  return { data: createdProperty, error: null };
 }
 
 export async function updateProperty(propertyId, payload) {

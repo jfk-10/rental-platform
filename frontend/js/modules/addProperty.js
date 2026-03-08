@@ -1,5 +1,5 @@
 import { requireUser } from "../core/auth.js";
-import { createProperty, uploadPropertyImage, deriveAllowedUsage } from "../services/propertyService.js";
+import { createProperty, deriveAllowedUsage } from "../services/propertyService.js";
 import { validatePropertyPayload } from "../utils/validators.js";
 import { showToast } from "../utils/helpers.js";
 
@@ -155,7 +155,7 @@ form.addEventListener("submit", async (event) => {
   submitBtn.disabled = true;
   submitBtn.textContent = "Publishing...";
 
-  const { data, error } = await createProperty(payload);
+  const { data, error } = await createProperty(payload, selectedImages);
   if (error || !data?.property_id) {
     showToast("Failed to create property", "error");
     submitBtn.disabled = false;
@@ -163,12 +163,6 @@ form.addEventListener("submit", async (event) => {
     return;
   }
 
-  for (const file of selectedImages) {
-    const uploadResult = await uploadPropertyImage(file, data.property_id);
-    if (uploadResult.error) {
-      console.error("Image upload failed", uploadResult.error);
-    }
-  }
 
   showToast("Property added successfully", "success");
   localStorage.setItem("propertiesUpdatedAt", String(Date.now()));

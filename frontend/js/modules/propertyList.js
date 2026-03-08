@@ -13,6 +13,11 @@ const propertyCards = document.getElementById("propertyCards");
 
 const FALLBACK_IMG = "https://images.unsplash.com/photo-1494526585095-c41746248156?auto=format&fit=crop&w=900&q=80";
 
+function getPropertyThumbnail(property) {
+  const firstImage = property.property_images?.find((image) => image?.image_url);
+  return firstImage?.image_url || FALLBACK_IMG;
+}
+
 function statusClass(status) {
   const value = (status || "").toLowerCase();
   if (value === "available") return "status-pill status-available";
@@ -89,7 +94,7 @@ function renderCards(properties) {
   }
 
   propertyCards.innerHTML = properties.map((property) => {
-    const imageUrl = property.property_images?.[0]?.image_url || FALLBACK_IMG;
+    const imageUrl = getPropertyThumbnail(property);
     const ownerName = property.owners?.users?.name || "Owner";
 
     const ownerActions = `
