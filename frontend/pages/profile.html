@@ -3,30 +3,31 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Your Profile | NestFinder</title>
+  <title>Profile | NestFinder</title>
   <link rel="icon" href="/assets/icons/favicon.ico" type="image/x-icon">
   <link rel="stylesheet" href="../css/global.css" />
   <link rel="stylesheet" href="../css/forms.css" />
+  <link rel="stylesheet" href="../css/dashboard.css" />
 </head>
 <body class="app-body">
   <div class="utility-bar" id="dashboardNavbar"></div>
 
-  <main class="page-shell">
-    <section class="page-card profile-page-card">
+  <main class="page-shell content-stack">
 
-      <!-- Hero strip: avatar + name + role -->
-      <div class="profile-hero" id="profileHero">
-        <div class="profile-hero-avatar" id="profileHeroAvatar">?</div>
-        <div class="profile-hero-info">
-          <p class="profile-hero-name" id="profileHeroName">Loading…</p>
-          <span class="profile-hero-role" id="profileHeroRole">—</span>
-        </div>
+    <!-- Hero strip -->
+    <section class="profile-hero">
+      <div class="profile-hero-avatar" id="profileHeroAvatar">?</div>
+      <div>
+        <h2 class="profile-hero-name" id="profileHeroName">Loading…</h2>
+        <span class="profile-hero-role" id="profileHeroRole"></span>
       </div>
+    </section>
 
-      <!-- Page head: title + action buttons -->
+    <!-- Profile card -->
+    <section class="page-card profile-page-card">
       <div class="profile-page-head">
         <div>
-          <h1 class="section-title">Your Profile</h1>
+          <h2 class="section-title">Your Profile</h2>
           <p class="section-subtitle">View and manage your account information.</p>
         </div>
         <div class="actions-row profile-actions">
@@ -37,39 +38,70 @@
         </div>
       </div>
 
-      <!-- Profile fields -->
-      <form id="profileForm" class="form-grid profile-grid">
+      <form id="profileForm" class="form-grid" style="margin-top:1.1rem">
+
+        <!-- ── Always visible ───────────────────────── -->
         <div class="profile-item">
-          <label>Full Name</label>
-          <p id="profileNameView" class="profile-value"></p>
+          <label class="profile-label">FULL NAME</label>
+          <p   class="profile-value" id="profileNameView"></p>
           <input id="profileName" type="text" readonly hidden />
         </div>
-
         <div class="profile-item">
-          <label>Email Address</label>
-          <p id="profileEmailView" class="profile-value"></p>
+          <label class="profile-label">EMAIL ADDRESS</label>
+          <p   class="profile-value" id="profileEmailView"></p>
           <input id="profileEmail" type="email" readonly hidden />
         </div>
-
         <div class="profile-item">
-          <label>Account Role</label>
-          <p id="profileRoleView" class="profile-value"></p>
+          <label class="profile-label">ACCOUNT ROLE</label>
+          <p   class="profile-value" id="profileRoleView"></p>
           <input id="profileRole" type="text" readonly hidden />
         </div>
-
         <div class="profile-item">
-          <label>Phone Number</label>
-          <p id="profilePhoneView" class="profile-value"></p>
-          <input id="profilePhone" type="text" placeholder="Enter phone number" required readonly hidden />
+          <label class="profile-label">PHONE NUMBER</label>
+          <p   class="profile-value" id="profilePhoneView"></p>
+          <input id="profilePhone" type="tel" placeholder="Phone number" hidden />
+        </div>
+        <div class="profile-item">
+          <label class="profile-label">CITY</label>
+          <p   class="profile-value" id="profileCityView"></p>
+          <input id="profileCity" type="text" placeholder="City" hidden />
         </div>
 
-        <div class="profile-item">
-          <label>City</label>
-          <p id="profileCityView" class="profile-value"></p>
-          <input id="profileCity" type="text" placeholder="Enter city" required readonly hidden />
+        <!-- ── Owner-only fields ─────────────────────── -->
+        <div class="profile-item" data-role="owner" hidden>
+          <label class="profile-label">ADDRESS</label>
+          <p   class="profile-value" id="profileAddressView"></p>
+          <input id="profileAddress" type="text" placeholder="Full address" hidden />
         </div>
+        <div class="profile-item" data-role="owner" hidden>
+          <label class="profile-label">OWNER TYPE</label>
+          <p   class="profile-value" id="profileOwnerTypeView"></p>
+          <select id="profileOwnerType" hidden>
+            <option value="">Select type</option>
+            <option value="Individual">Individual</option>
+            <option value="Company">Company</option>
+            <option value="Agency">Agency</option>
+          </select>
+        </div>
+
+        <!-- ── Tenant-only fields ─────────────────────── -->
+        <div class="profile-item" data-role="tenant" hidden>
+          <label class="profile-label">AADHAAR NUMBER</label>
+          <p   class="profile-value" id="profileAadhaarView"></p>
+          <input id="profileAadhaar" type="text" placeholder="XXXX XXXX XXXX" maxlength="14" hidden />
+        </div>
+        <div class="profile-item" data-role="tenant" hidden>
+          <label class="profile-label">OCCUPATION</label>
+          <p   class="profile-value" id="profileOccupationView"></p>
+          <input id="profileOccupation" type="text" placeholder="Occupation" hidden />
+        </div>
+        <div class="profile-item full" data-role="tenant" hidden>
+          <label class="profile-label">PERMANENT ADDRESS</label>
+          <p   class="profile-value" id="profilePermAddressView"></p>
+          <input id="profilePermAddress" type="text" placeholder="Permanent address" hidden />
+        </div>
+
       </form>
-
     </section>
   </main>
 

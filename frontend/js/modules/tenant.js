@@ -16,11 +16,23 @@ const closeBtn            = document.getElementById("closeCompleteProfileBtn");
 const cancelBtn           = document.getElementById("cancelCompleteProfileBtn");
 const tenantForm          = document.getElementById("tenantCompleteForm");
 
-const profileComplete = Boolean(user.phone && user.city);
+// All tenant columns must be filled
+const profileComplete = Boolean(
+  user.phone && user.city && user.aadhaar_no && user.occupation && user.permanent_address
+);
 
-function hideBanner() { profilePrompt.hidden = true; completeProfileForm.hidden = true; }
-function openForm()   { profilePrompt.hidden = true; completeProfileForm.hidden = false; }
-function closeForm()  { profilePrompt.hidden = !profileComplete; completeProfileForm.hidden = true; }
+function hideBanner() {
+  profilePrompt.hidden = true;
+  completeProfileForm.hidden = true;
+}
+function openForm() {
+  profilePrompt.hidden = true;
+  completeProfileForm.hidden = false;
+}
+function closeForm() {
+  profilePrompt.hidden = profileComplete;
+  completeProfileForm.hidden = true;
+}
 
 if (!profileComplete && profilePrompt) profilePrompt.hidden = false;
 
@@ -30,8 +42,17 @@ cancelBtn?.addEventListener("click", closeForm);
 
 tenantForm?.addEventListener("submit", async (e) => {
   e.preventDefault();
-  const phone = document.getElementById("tenantPhone").value.trim();
-  const city  = document.getElementById("tenantCity").value.trim();
+
+  const phone             = document.getElementById("tenantPhone").value.trim();
+  const aadhaar_no        = document.getElementById("tenantAadhaar").value.trim();
+  const occupation        = document.getElementById("tenantOccupation").value.trim();
+  const city              = document.getElementById("tenantCity").value.trim();
+  const permanent_address = document.getElementById("tenantPermAddress").value.trim();
+
+  if (!phone || !aadhaar_no || !occupation || !city || !permanent_address) {
+    showToast("Please fill in all required fields", "error");
+    return;
+  }
 
   const saveBtn = document.getElementById("saveTenantProfileBtn");
   saveBtn.disabled = true;
@@ -39,18 +60,24 @@ tenantForm?.addEventListener("submit", async (e) => {
 
   const { error } = await supabaseClient
     .from("tenants")
-    .upsert({ user_id: user.user_id, phone, city }, { onConflict: "user_id" });
+    .upsert(
+      { user_id: user.user_id, phone, aadhaar_no, occupation, city, permanent_address },
+      { onConflict: "user_id" }
+    );
 
   saveBtn.disabled = false;
   saveBtn.textContent = "Save & Continue";
 
   if (error) {
+    console.error("Tenant profile upsert error:", error);
     showToast(error.message || "Failed to save profile", "error");
     return;
   }
 
   const stored = JSON.parse(localStorage.getItem("appUser") || "{}");
-  localStorage.setItem("appUser", JSON.stringify({ ...stored, phone, city }));
+  localStorage.setItem("appUser", JSON.stringify({
+    ...stored, phone, aadhaar_no, occupation, city, permanent_address
+  }));
 
   showToast("Profile saved ✓", "success");
   hideBanner();
@@ -70,8 +97,8 @@ const tenantPayments     = (payments    || []).filter((item) => tenantAgreementI
 const tenantMaintenance  = (maintenance || []).filter((item) => tenantAgreementIds.has(item.agreement_id));
 const upcomingPayment    = tenantPayments[0]?.amount_paid || activeAgreement?.monthly_rent || 0;
 
-document.getElementById("tenantActiveRental").textContent         = activeAgreement ? "1" : "0";
-document.getElementById("tenantUpcomingPayment").textContent      = `₹${Number(upcomingPayment).toLocaleString()}`;
-document.getElementById("tenantMaintenanceRequests").textContent  = String(tenantMaintenance.length);
-document.getElementById("tenantAgreementStatus").textContent      = activeAgreement?.agreement_status || "No Active Agreement";
-document.getElementById("tenantRecentNotifications").textContent  = String(tenantPayments.length + tenantMaintenance.length);
+document.getElementById("tenantActiveRental").textContent        = activeAgreement ? "1" : "0";
+document.getElementById("tenantUpcomingPayment").textContent     = `₹${Number(upcomingPayment).toLocaleString()}`;
+document.getElementById("tenantMaintenanceRequests").textContent = String(tenantMaintenance.length);
+document.getElementById("tenantAgreementStatus").textContent     = activeAgreement?.agreement_status || "No Active Agreement";
+document.getElementById("tenantRecentNotifications").textContent = String(tenantPayments.length + tenantMaintenance.length);

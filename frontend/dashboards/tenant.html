@@ -32,18 +32,30 @@
         <div class="cpf-head">
           <div>
             <h3 class="section-title">Complete your profile</h3>
-            <p class="section-subtitle">This is a one-time setup. You can update details later from the Profile page.</p>
+            <p class="section-subtitle">One-time setup. Fill in all details to access rentals.</p>
           </div>
           <button class="btn btn-ghost cpf-close" type="button" id="closeCompleteProfileBtn">✕</button>
         </div>
         <form id="tenantCompleteForm" class="form-grid" style="margin-top:1rem">
           <div>
-            <label for="tenantPhone">Phone Number</label>
+            <label for="tenantPhone">Phone Number <span style="color:var(--danger)">*</span></label>
             <input type="tel" id="tenantPhone" placeholder="+91 00000 00000" required />
           </div>
           <div>
-            <label for="tenantCity">City</label>
+            <label for="tenantAadhaar">Aadhaar Number <span style="color:var(--danger)">*</span></label>
+            <input type="text" id="tenantAadhaar" placeholder="XXXX XXXX XXXX" maxlength="14" required />
+          </div>
+          <div>
+            <label for="tenantOccupation">Occupation <span style="color:var(--danger)">*</span></label>
+            <input type="text" id="tenantOccupation" placeholder="e.g. Software Engineer" required />
+          </div>
+          <div>
+            <label for="tenantCity">City <span style="color:var(--danger)">*</span></label>
             <input type="text" id="tenantCity" placeholder="e.g. Bangalore" required />
+          </div>
+          <div class="full">
+            <label for="tenantPermAddress">Permanent Address <span style="color:var(--danger)">*</span></label>
+            <input type="text" id="tenantPermAddress" placeholder="Street, Area, Landmark" required />
           </div>
           <div class="full actions-row" style="margin-top:0">
             <button class="btn btn-primary" type="submit" id="saveTenantProfileBtn">Save &amp; Continue</button>

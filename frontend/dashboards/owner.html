@@ -27,23 +27,36 @@
         </button>
       </section>
 
-      <!-- ── Complete Profile Form (inline, hidden until banner btn clicked) ── -->
+      <!-- ── Complete Profile Form ── -->
       <section id="completeProfileForm" class="page-card" hidden>
         <div class="cpf-head">
           <div>
             <h3 class="section-title">Complete your profile</h3>
-            <p class="section-subtitle">This is a one-time setup. You can update details later from the Profile page.</p>
+            <p class="section-subtitle">One-time setup. Fill in all details to unlock full platform access.</p>
           </div>
           <button class="btn btn-ghost cpf-close" type="button" id="closeCompleteProfileBtn">✕</button>
         </div>
         <form id="ownerCompleteForm" class="form-grid" style="margin-top:1rem">
           <div>
-            <label for="ownerPhone">Phone Number</label>
+            <label for="ownerPhone">Phone Number <span style="color:var(--danger)">*</span></label>
             <input type="tel" id="ownerPhone" placeholder="+91 00000 00000" required />
           </div>
           <div>
-            <label for="ownerCity">City</label>
+            <label for="ownerCity">City <span style="color:var(--danger)">*</span></label>
             <input type="text" id="ownerCity" placeholder="e.g. Bangalore" required />
+          </div>
+          <div class="full">
+            <label for="ownerAddress">Address <span style="color:var(--danger)">*</span></label>
+            <input type="text" id="ownerAddress" placeholder="Street, Area, Landmark" required />
+          </div>
+          <div>
+            <label for="ownerType">Owner Type <span style="color:var(--danger)">*</span></label>
+            <select id="ownerType" required>
+              <option value="">Select type</option>
+              <option value="Individual">Individual</option>
+              <option value="Company">Company</option>
+              <option value="Agency">Agency</option>
+            </select>
           </div>
           <div class="full actions-row" style="margin-top:0">
             <button class="btn btn-primary" type="submit" id="saveOwnerProfileBtn">Save &amp; Continue</button>
