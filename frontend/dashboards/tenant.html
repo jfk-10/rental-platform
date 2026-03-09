@@ -10,18 +10,8 @@
   <link rel="stylesheet" href="../css/dashboard.css" />
 </head>
 <body class="app-body">
-  <div class="utility-bar">
-    <div class="app-nav shell-panel navbar-container">
-      <a class="app-brand" href="../index.html">🏠 Rental Platform</a>
-      <nav class="app-links">
-        <a href="../dashboards/tenant.html">Dashboard</a>
-        <a href="../pages/property-list.html">My Rentals</a>
-        <a href="../pages/payments.html">Payments</a>
-        <a href="../pages/maintenance.html">Maintenance</a>
-        <a href="../pages/profile.html">Profile</a>
-      </nav>
-    </div>
-  </div>
+  <div class="utility-bar" id="dashboardNavbar"></div>
+
 
   <main class="dashboard-layout dashboard-layout--full">
     <section class="dashboard-shell">
@@ -42,7 +32,10 @@
       </section>
     </section>
   </main>
+
+  <div id="appFooter"></div>
   <script type="module" src="../js/authGuard.js"></script>
   <script type="module" src="../js/modules/tenant.js"></script>
+  <script type="module" src="../components/navbar.js"></script>
 </body>
 </html>

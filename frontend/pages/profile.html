@@ -9,14 +9,7 @@
   <link rel="stylesheet" href="../css/forms.css" />
 </head>
 <body class="app-body">
-  <div class="utility-bar">
-    <div class="app-nav shell-panel navbar-container">
-      <a class="app-brand" href="../index.html">🏠 Rental Platform</a>
-      <nav class="app-links">
-        <a href="../pages/profile.html">Profile</a>
-      </nav>
-    </div>
-  </div>
+  <div class="utility-bar" id="dashboardNavbar"></div>
 
   <main class="page-shell">
     <section class="page-card profile-page-card">
@@ -24,25 +17,26 @@
         <h1 class="section-title">Your Profile</h1>
         <div class="actions-row profile-actions">
           <button id="editProfileBtn" class="btn btn-primary" type="button">Edit Profile</button>
+          <button id="saveProfileBtn" class="btn btn-primary" type="submit" form="profileForm" hidden>Save Changes</button>
+          <button id="cancelProfileBtn" class="btn btn-secondary" type="button" hidden>Cancel</button>
           <button id="logoutBtn" class="btn btn-danger" type="button">Logout</button>
         </div>
       </div>
 
-      <form id="profileForm" class="form-grid">
-        <div><label for="profileName">Name</label><input id="profileName" type="text" required readonly /></div>
-        <div><label for="profileEmail">Email</label><input id="profileEmail" type="email" readonly /></div>
-        <div><label for="profileRole">Role</label><input id="profileRole" type="text" readonly /></div>
-        <div><label for="profilePhone">Phone</label><input id="profilePhone" type="text" required readonly /></div>
-        <div><label for="profileCity">City</label><input id="profileCity" type="text" required readonly /></div>
-        <div class="full actions-row">
-          <button id="saveProfileBtn" class="btn btn-primary" type="submit" hidden>Save Changes</button>
-          <button id="cancelProfileBtn" class="btn btn-secondary" type="button" hidden>Cancel</button>
-        </div>
+      <form id="profileForm" class="form-grid profile-grid">
+        <div class="profile-item"><label>Name</label><p id="profileNameView" class="profile-value"></p><input id="profileName" type="text" readonly hidden /></div>
+        <div class="profile-item"><label>Email</label><p id="profileEmailView" class="profile-value"></p><input id="profileEmail" type="email" readonly hidden /></div>
+        <div class="profile-item"><label>Role</label><p id="profileRoleView" class="profile-value"></p><input id="profileRole" type="text" readonly hidden /></div>
+        <div class="profile-item"><label>Phone</label><p id="profilePhoneView" class="profile-value"></p><input id="profilePhone" type="text" required readonly hidden /></div>
+        <div class="profile-item"><label>City</label><p id="profileCityView" class="profile-value"></p><input id="profileCity" type="text" required readonly hidden /></div>
       </form>
     </section>
   </main>
 
+  <div id="appFooter"></div>
+
   <script type="module" src="../js/authGuard.js"></script>
   <script type="module" src="../js/profile.js"></script>
+  <script type="module" src="../components/navbar.js"></script>
 </body>
 </html>

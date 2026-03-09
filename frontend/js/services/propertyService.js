@@ -208,3 +208,21 @@ export async function uploadPropertyImage(file, propertyId) {
     .from("property_images")
     .insert([{ property_id: propertyId, image_url: publicUrlData.publicUrl }]);
 }
+
+
+export async function listPropertyImagesForPropertyIds(propertyIds = []) {
+  const validIds = propertyIds.map((id) => Number(id)).filter((id) => Number.isFinite(id) && id > 0);
+  if (!validIds.length) return { data: [], error: null };
+
+  return supabaseClient
+    .from("property_images")
+    .select("property_id,image_url")
+    .in("property_id", validIds);
+}
+
+export async function listPropertyImagesForPropertyId(propertyId) {
+  return supabaseClient
+    .from("property_images")
+    .select("image_url")
+    .eq("property_id", Number(propertyId));
+}

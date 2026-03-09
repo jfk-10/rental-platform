@@ -321,6 +321,36 @@ tbody tr:hover { background: #f8fafc; transition: background-color 0.2s ease; }
   gap: 1.2rem;
 }
 
+
+.profile-grid .profile-item {
+  background: #f8fafc;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 0.9rem;
+}
+
+.profile-value {
+  margin: 0;
+  font-weight: 600;
+  color: var(--text);
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+}
+
+.profile-page-card.is-editing .profile-value {
+  display: none;
+}
+
+.profile-page-card.is-editing .profile-item input {
+  display: block !important;
+}
+
+#appFooter {
+  width: var(--content-width);
+  margin: 0 auto 1.5rem;
+}
+
 .profile-page-head {
   display: flex;
   align-items: flex-start;

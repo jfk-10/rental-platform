@@ -3,6 +3,7 @@ import { logout, requireUser, storeUserSession } from "./core/auth.js";
 import { showToast } from "./utils/helpers.js";
 
 const profileForm = document.getElementById("profileForm");
+const profileCard = document.querySelector(".profile-page-card");
 const editProfileBtn = document.getElementById("editProfileBtn");
 const saveProfileBtn = document.getElementById("saveProfileBtn");
 const cancelProfileBtn = document.getElementById("cancelProfileBtn");
@@ -15,6 +16,10 @@ let editMode = false;
 
 function getField(id) {
   return document.getElementById(id);
+}
+
+function getValueNode(id) {
+  return document.getElementById(`${id}View`);
 }
 
 function getEditableFields() {
@@ -31,6 +36,12 @@ function renderProfile(profile) {
   getField("profileRole").value = profile.role || "";
   getField("profilePhone").value = profile.phone || "";
   getField("profileCity").value = profile.city || "";
+
+  getValueNode("profileName").textContent = profile.name || "-";
+  getValueNode("profileEmail").textContent = profile.email || "-";
+  getValueNode("profileRole").textContent = profile.role || "-";
+  getValueNode("profilePhone").textContent = profile.phone || "-";
+  getValueNode("profileCity").textContent = profile.city || "-";
 }
 
 function setEditMode(enabled) {
@@ -40,6 +51,7 @@ function setEditMode(enabled) {
     field.readOnly = !editMode;
   });
 
+  profileCard?.classList.toggle("is-editing", editMode);
   editProfileBtn.hidden = editMode;
   saveProfileBtn.hidden = !editMode;
   cancelProfileBtn.hidden = !editMode;
@@ -104,7 +116,6 @@ async function loadProfile() {
 
 function restoreInitialValues() {
   if (!originalProfile) return;
-
   renderProfile(originalProfile);
   setEditMode(false);
 }
@@ -149,33 +160,17 @@ async function saveProfile() {
   }
 
   await loadProfile();
-  setEditMode(false);
   showToast("Profile updated successfully", "success");
 }
 
-if (editProfileBtn) {
-  editProfileBtn.addEventListener("click", () => {
-    setEditMode(true);
-  });
-}
-
-if (cancelProfileBtn) {
-  cancelProfileBtn.addEventListener("click", () => {
-    restoreInitialValues();
-  });
-}
-
-if (profileForm) {
-  profileForm.addEventListener("submit", async (event) => {
-    event.preventDefault();
-    await saveProfile();
-  });
-}
-
-if (logoutBtn) {
-  logoutBtn.addEventListener("click", () => {
-    void logout();
-  });
-}
+editProfileBtn?.addEventListener("click", () => setEditMode(true));
+cancelProfileBtn?.addEventListener("click", restoreInitialValues);
+profileForm?.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  await saveProfile();
+});
+logoutBtn?.addEventListener("click", () => {
+  void logout();
+});
 
 await loadProfile();

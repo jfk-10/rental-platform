@@ -14,9 +14,7 @@
   <link rel="stylesheet" href="/assets/css/style.css">
 </head>
 <body class="app-body">
-  <div class="utility-bar">
-    <a class="btn btn-secondary" data-back-dashboard href="../dashboards/owner.html">← Back to Dashboard</a>
-</div>
+  <div class="utility-bar" id="dashboardNavbar"></div>
 
   <main class="page-shell content-stack">
     <section class="page-card content-stack">
@@ -46,9 +44,11 @@
       <div id="propertyCards" class="properties-grid"></div>
     </section>
   </main>
+
+  <div id="appFooter"></div>
   <script type="module" src="../js/core/toast.js"></script>
 <script type="module" src="../js/modules/propertyList.js"></script>
-<script type="module" src="../js/modules/appShell.js"></script>
+  <script type="module" src="../components/navbar.js"></script>
   <script src="/assets/js/main.js" defer></script>
 </body>
 </html>

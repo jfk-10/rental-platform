@@ -1,5 +1,5 @@
 import { requireUser } from "../core/auth.js";
-import { listProperties, getPropertiesByOwnerUserId, deleteProperty, updateProperty, PROPERTY_IMAGE_PLACEHOLDER } from "../services/propertyService.js";
+import { listProperties, getPropertiesByOwnerUserId, deleteProperty, updateProperty, listPropertyImagesForPropertyIds, PROPERTY_IMAGE_PLACEHOLDER } from "../services/propertyService.js";
 import { formatCurrency, showToast } from "../utils/helpers.js";
 
 const user = await requireUser(["admin", "owner", "tenant"]);
@@ -44,6 +44,25 @@ function getRelevantDetails(property) {
   return `Area: ${property.area_sqft || 0} sqft`;
 }
 
+
+async function attachPropertyImages(properties = []) {
+  const ids = properties.map((property) => property.property_id);
+  const { data, error } = await listPropertyImagesForPropertyIds(ids);
+  if (error) return properties;
+
+  const imageMap = (data || []).reduce((acc, row) => {
+    const key = Number(row.property_id);
+    if (!acc[key]) acc[key] = [];
+    acc[key].push({ image_url: row.image_url });
+    return acc;
+  }, {});
+
+  return properties.map((property) => ({
+    ...property,
+    property_images: imageMap[Number(property.property_id)] || []
+  }));
+}
+
 function canEdit(property) {
   return user.role === "owner" && Number(property.owners?.user_id) === Number(user.user_id);
 }
@@ -73,7 +92,8 @@ async function fetchProperties() {
     return;
   }
 
-  renderCards(data || []);
+  const rowsWithImages = await attachPropertyImages(data || []);
+  renderCards(rowsWithImages);
 }
 
 function renderCards(properties) {

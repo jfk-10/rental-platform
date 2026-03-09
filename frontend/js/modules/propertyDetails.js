@@ -1,4 +1,4 @@
-import { listProperties, PROPERTY_IMAGE_PLACEHOLDER } from "../services/propertyService.js";
+import { listProperties, listPropertyImagesForPropertyId, PROPERTY_IMAGE_PLACEHOLDER } from "../services/propertyService.js";
 import { formatCurrency } from "../utils/helpers.js";
 
 const details = document.getElementById("propertyDetails");
@@ -22,8 +22,12 @@ async function loadProperty() {
     return;
   }
 
-  const gallery = property.property_images?.length
-    ? property.property_images.map((img) => `<img src='${img.image_url}' alt='property image' />`).join("")
+  const { data: propertyImages } = await listPropertyImagesForPropertyId(property.property_id);
+  const resolvedImages = (propertyImages || []).map((row) => ({ image_url: row.image_url }));
+  property.property_images = resolvedImages;
+
+  const gallery = resolvedImages.length
+    ? resolvedImages.map((img) => `<img src='${img.image_url}' alt='property image' />`).join("")
     : `<img src="${PROPERTY_IMAGE_PLACEHOLDER}" alt="property image" />`;
 
   const recentlyViewed = JSON.parse(localStorage.getItem("recentlyViewed") || "[]");
