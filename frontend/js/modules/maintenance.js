@@ -4,7 +4,7 @@ import { createMaintenanceRequest, listMaintenanceRequests, updateMaintenanceReq
 import { formatCurrency, formatDate, showToast } from "../utils/helpers.js";
 
 const user = await requireUser(["admin", "owner", "tenant"]);
-if (!user) throw new Error("Unauthorized");
+if (!user) return;
 
 const requestForm = document.getElementById("requestForm");
 const agreementSelect = document.getElementById("agreementId");

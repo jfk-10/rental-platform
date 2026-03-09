@@ -4,7 +4,7 @@ import { validatePropertyPayload } from "../utils/validators.js";
 import { showToast } from "../utils/helpers.js";
 
 const user = await requireUser(["owner"]);
-if (!user) throw new Error("Unauthorized");
+if (!user) return;
 
 const form = document.getElementById("propertyForm");
 const propertyTypeInput = document.getElementById("propertyType");

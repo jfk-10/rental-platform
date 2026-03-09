@@ -4,7 +4,7 @@ import { createPayment, listPayments } from "../services/paymentService.js";
 import { formatCurrency, formatDate, showToast } from "../utils/helpers.js";
 
 const user = await requireUser(["admin", "owner", "tenant"]);
-if (!user) throw new Error("Unauthorized");
+if (!user) return;
 
 const paymentForm = document.getElementById("paymentForm");
 const agreementSelect = document.getElementById("agreementId");

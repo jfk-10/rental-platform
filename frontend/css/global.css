@@ -506,14 +506,12 @@ tbody tr:hover { background: #f8fafc; transition: background-color 0.2s ease; }
 }
 
 @media (max-width: 992px) {
-  body.app-body { padding-top: 5rem; }
   .page-shell { margin-top: 0.75rem; }
   .profile-actions .btn,
   .profile-edit-toggle { min-width: 0; }
 }
 
 @media (max-width: 768px) {
-  body.app-body { padding-top: 4.8rem; }
   .actions-row .btn,
   .utility-bar .btn,
   .app-user-actions .btn,
