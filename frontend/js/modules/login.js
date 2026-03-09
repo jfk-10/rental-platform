@@ -36,7 +36,6 @@ if (form) {
       return;
     }
 
-    localStorage.setItem("loggedInUser", email);
     storeUserSession(authData.user, appUser);
 
     const nextPage = getDashboardPath(appUser.role);

@@ -5,7 +5,7 @@ import { listPayments } from "../services/paymentService.js";
 import { listMaintenanceRequests } from "../services/maintenanceService.js";
 
 const user = await requireUser(["owner"]);
-if (!user) throw new Error("Unauthorized");
+if (!user) return;
 
 const profilePrompt = document.getElementById("ownerProfilePrompt");
 const profileComplete = Boolean(user.phone && user.city);

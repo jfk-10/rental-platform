@@ -3,7 +3,7 @@ import { listProperties, getPropertiesByOwnerUserId, deleteProperty, updatePrope
 import { formatCurrency, showToast } from "../utils/helpers.js";
 
 const user = await requireUser(["admin", "owner", "tenant"]);
-if (!user) throw new Error("Unauthorized");
+if (!user) return;
 
 const cityFilter = document.getElementById("cityFilter");
 const statusFilter = document.getElementById("statusFilter");
