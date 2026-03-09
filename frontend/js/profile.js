@@ -10,9 +10,15 @@ const logoutBtn = document.getElementById("logoutBtn");
 
 let baseUser = null;
 let roleProfile = null;
+let originalProfile = null;
+let editMode = false;
 
 function getField(id) {
   return document.getElementById(id);
+}
+
+function getEditableFields() {
+  return [getField("profilePhone"), getField("profileCity")];
 }
 
 function mergedProfile() {
@@ -27,18 +33,16 @@ function renderProfile(profile) {
   getField("profileCity").value = profile.city || "";
 }
 
-function toggleEditMode(enabled) {
-  const editable = enabled && (baseUser?.role === "owner" || baseUser?.role === "tenant");
+function setEditMode(enabled) {
+  editMode = Boolean(enabled) && (baseUser?.role === "owner" || baseUser?.role === "tenant");
 
-  getField("profileName").disabled = true;
-  getField("profileEmail").disabled = true;
-  getField("profileRole").disabled = true;
-  getField("profilePhone").disabled = !editable;
-  getField("profileCity").disabled = !editable;
+  getEditableFields().forEach((field) => {
+    field.readOnly = !editMode;
+  });
 
-  editProfileBtn.hidden = enabled;
-  saveProfileBtn.hidden = !enabled;
-  cancelProfileBtn.hidden = !enabled;
+  editProfileBtn.hidden = editMode;
+  saveProfileBtn.hidden = !editMode;
+  cancelProfileBtn.hidden = !editMode;
 }
 
 async function loadProfile() {
@@ -85,18 +89,28 @@ async function loadProfile() {
   }
 
   const merged = mergedProfile();
-  renderProfile(merged);
+  originalProfile = {
+    name: merged.name || "",
+    email: merged.email || "",
+    role: merged.role || "",
+    phone: merged.phone || "",
+    city: merged.city || ""
+  };
+
+  renderProfile(originalProfile);
   storeUserSession(user, merged);
-  toggleEditMode(false);
+  setEditMode(false);
 }
 
 function restoreInitialValues() {
-  renderProfile(mergedProfile());
-  toggleEditMode(false);
+  if (!originalProfile) return;
+
+  renderProfile(originalProfile);
+  setEditMode(false);
 }
 
 async function saveProfile() {
-  if (!baseUser) return;
+  if (!baseUser || !editMode) return;
 
   const phone = getField("profilePhone").value.trim();
   const city = getField("profileCity").value.trim();
@@ -104,13 +118,12 @@ async function saveProfile() {
   if (baseUser.role === "owner") {
     const { error } = await supabaseClient
       .from("owners")
-      .upsert({
-        user_id: baseUser.user_id,
+      .update({
         phone,
-        address: roleProfile?.address || null,
         city,
-        owner_type: roleProfile?.owner_type || "Local"
-      }, { onConflict: "user_id" });
+        address: roleProfile?.address || null
+      })
+      .eq("user_id", baseUser.user_id);
 
     if (error) {
       showToast(error.message || "Failed to save profile", "error");
@@ -121,13 +134,13 @@ async function saveProfile() {
   if (baseUser.role === "tenant") {
     const { error } = await supabaseClient
       .from("tenants")
-      .upsert({
-        user_id: baseUser.user_id,
+      .update({
         phone,
+        city,
         occupation: roleProfile?.occupation || null,
-        permanent_address: roleProfile?.permanent_address || null,
-        city
-      }, { onConflict: "user_id" });
+        permanent_address: roleProfile?.permanent_address || null
+      })
+      .eq("user_id", baseUser.user_id);
 
     if (error) {
       showToast(error.message || "Failed to save profile", "error");
@@ -136,15 +149,20 @@ async function saveProfile() {
   }
 
   await loadProfile();
+  setEditMode(false);
   showToast("Profile updated successfully", "success");
 }
 
 if (editProfileBtn) {
-  editProfileBtn.addEventListener("click", () => toggleEditMode(true));
+  editProfileBtn.addEventListener("click", () => {
+    setEditMode(true);
+  });
 }
 
 if (cancelProfileBtn) {
-  cancelProfileBtn.addEventListener("click", restoreInitialValues);
+  cancelProfileBtn.addEventListener("click", () => {
+    restoreInitialValues();
+  });
 }
 
 if (profileForm) {
