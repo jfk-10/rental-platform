@@ -1,4 +1,4 @@
-import { getStoredUser, logout, syncStoredUserWithSession } from "../js/core/auth.js";
+import { getStoredUser, syncStoredUserWithSession } from "../js/core/auth.js";
 
 function getBasePrefix() {
   const path = window.location.pathname;
@@ -62,13 +62,6 @@ async function loadNavbar() {
     node.setAttribute("href", `${prefix}${href}`);
     node.setAttribute("data-nav-link", "true");
   });
-
-  const logoutBtn = container.querySelector("[data-navbar-logout]");
-  if (logoutBtn) {
-    logoutBtn.addEventListener("click", () => {
-      void logout();
-    });
-  }
 
   markActiveLinks(container);
   await loadFooter(prefix);

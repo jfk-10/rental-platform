@@ -123,16 +123,17 @@ function restoreInitialValues() {
 async function saveProfile() {
   if (!baseUser || !editMode) return;
 
-  const phone = getField("profilePhone").value.trim();
-  const city = getField("profileCity").value.trim();
+  const phoneValue = getField("profilePhone").value.trim();
+  const cityValue = getField("profileCity").value.trim();
+  const addressValue = roleProfile?.address || null;
 
   if (baseUser.role === "owner") {
     const { error } = await supabaseClient
       .from("owners")
       .update({
-        phone,
-        city,
-        address: roleProfile?.address || null
+        phone: phoneValue,
+        city: cityValue,
+        address: addressValue
       })
       .eq("user_id", baseUser.user_id);
 
@@ -146,8 +147,8 @@ async function saveProfile() {
     const { error } = await supabaseClient
       .from("tenants")
       .update({
-        phone,
-        city,
+        phone: phoneValue,
+        city: cityValue,
         occupation: roleProfile?.occupation || null,
         permanent_address: roleProfile?.permanent_address || null
       })
