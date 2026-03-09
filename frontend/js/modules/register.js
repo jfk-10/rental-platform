@@ -34,6 +34,10 @@ if (form) {
       });
 
       if (signUpError) {
+        const msg = signUpError.message?.toLowerCase() || "";
+        if (msg.includes("already registered") || msg.includes("already been registered")) {
+          throw new Error("An account with this email already exists. Please login instead.");
+        }
         throw new Error(signUpError.message || "Registration failed");
       }
 
@@ -41,10 +45,10 @@ if (form) {
         throw new Error("Unable to create account. Please try again.");
       }
 
+      // Insert into public.users — do NOT store password here; auth is handled by Supabase Auth
       const { error: profileError } = await supabaseClient.from("users").insert({
-        name: fullName,
+        name:  fullName,
         email,
-        password,
         role
       });
 
