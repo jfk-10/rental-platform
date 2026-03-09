@@ -143,6 +143,10 @@ function hideProgress() { progressWrap.classList.remove("visible"); }
 
 // ── Drag-and-drop ─────────────────────────────────────────────
 if (dropZone) {
+  // Click anywhere on the zone → open file picker
+  dropZone.addEventListener("click", (e) => {
+    if (e.target !== imageInput) imageInput.click();
+  });
   dropZone.addEventListener("dragover", (e) => { e.preventDefault(); dropZone.classList.add("drag-over"); });
   dropZone.addEventListener("dragleave", ()  => dropZone.classList.remove("drag-over"));
   dropZone.addEventListener("drop", (e) => {
