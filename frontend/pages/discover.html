@@ -1,7 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <title>Discover Rentals | Rental Platform</title>
+  <title>Discover Rentals | NestFinder</title>
+  <meta name="description" content="Search and discover rental properties by city, status, and budget." />
   <link rel="icon" href="/assets/icons/favicon.ico" type="image/x-icon">
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -11,7 +12,7 @@
 <body class="app-body">
   <div class="utility-bar">
     <nav class="landing-nav shell-panel">
-      <strong class="brand-mark">🏠 Rental Platform</strong>
+      <a class="brand-mark" href="../index.html">🏠 NestFinder</a>
       <div class="landing-links">
         <a href="../index.html">Home</a>
         <a href="../pages/about.html">About</a>
@@ -19,27 +20,58 @@
         <a href="../pages/terms.html">Terms</a>
       </div>
       <div class="actions-row nav-actions">
-        <a id="loginBtn" class="btn btn-secondary" href="../pages/login.html">Login</a>
-        <a id="signupBtn" class="btn btn-primary" href="../pages/register.html">Sign up</a>
+        <a id="loginBtn"  class="btn btn-secondary" href="../pages/login.html">Login</a>
+        <a id="signupBtn" class="btn btn-primary"   href="../pages/register.html">Sign up</a>
       </div>
     </nav>
   </div>
 
   <main class="page-shell content-stack">
+
+    <!-- ── Search bar ── -->
     <section class="page-card">
       <h1 class="section-title">Discover properties</h1>
       <p class="section-subtitle">Search by city, status, and budget to see active listings.</p>
       <div class="search-bar shell-panel discover-filter-card">
         <div class="discover-filter-grid">
-          <div class="discover-filter-field"><label for="homeCity">City</label><input id="homeCity" type="text" placeholder="e.g. Nairobi" /></div>
-          <div class="discover-filter-field"><label for="homeStatus">Status</label><select id="homeStatus"><option value="">Any status</option><option value="Available">Available</option><option value="Rented">Rented</option></select></div>
-          <div class="discover-filter-field"><label for="homeBudget">Budget (Max)</label><input id="homeBudget" type="text" inputmode="numeric" /></div>
-          <div class="toolbar-action-wrap discover-filter-action"><button id="homeSearch" class="btn btn-primary" type="button">Search listings</button></div>
+          <div class="discover-filter-field">
+            <label for="homeCity">City</label>
+            <input id="homeCity" type="text" placeholder="e.g. Bangalore" />
+          </div>
+          <div class="discover-filter-field">
+            <label for="homeStatus">Status</label>
+            <select id="homeStatus">
+              <option value="">Any status</option>
+              <option value="Available">Available</option>
+              <option value="Rented">Rented</option>
+            </select>
+          </div>
+          <div class="discover-filter-field">
+            <label for="homeBudget">Budget (Max ₹)</label>
+            <input id="homeBudget" type="text" inputmode="numeric" placeholder="e.g. 20000" />
+          </div>
+          <div class="toolbar-action-wrap discover-filter-action">
+            <button id="homeSearch" class="btn btn-primary" type="button">Search listings</button>
+          </div>
         </div>
       </div>
     </section>
-    <section class="page-card"><h2 class="section-title">Recommended properties</h2><div id="recommendedGrid" class="property-grid"></div></section>
-    <section class="page-card"><h2 class="section-title">Newly added homes</h2><div id="newHomesGrid" class="property-grid"></div></section>
+
+    <!-- ── Recommended properties (filtered by search) ── -->
+    <section class="page-card">
+      <h2 class="section-title">Recommended properties</h2>
+      <div id="recommendedGrid" class="property-grid">
+        <!-- Populated by home.js on Search click or URL param arrival -->
+      </div>
+    </section>
+
+    <!-- ── Newly added homes (always latest, no search filter) ── -->
+    <section class="page-card">
+      <h2 class="section-title">Newly added homes</h2>
+      <p class="section-subtitle">Latest properties — ordered by date added.</p>
+      <div id="newHomesGrid" class="property-grid"></div>
+    </section>
+
   </main>
 
   <script type="module" src="../js/authGuard.js"></script>
