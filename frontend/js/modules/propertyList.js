@@ -13,11 +13,24 @@ import { formatCurrency, showToast } from "../utils/helpers.js";
   const propertyCards = document.getElementById("propertyCards");
   if (!propertyCards) return;
 
-  const user = await requireUser(["admin", "owner", "tenant"]);
+  const currentPath = window.location.pathname;
+  const isPropertyListPage = currentPath.endsWith("/pages/property-list.html");
+  const isOwnerDashboard = currentPath.endsWith("/dashboards/owner.html");
+  const user = isOwnerDashboard
+    ? await requireUser(["owner"])
+    : await requireUser(["admin", "owner", "tenant"]);
+
   if (!user) return;
 
-  const currentPath = window.location.pathname;
-  const isOwnerDashboard = currentPath.endsWith("/dashboards/owner.html");
+  if (isPropertyListPage && user.role === "owner") {
+    window.location.href = "../dashboards/owner.html#ownerPropertiesSection";
+    return;
+  }
+
+  if (isPropertyListPage && user.role === "tenant") {
+    window.location.href = "../pages/discover.html";
+    return;
+  }
 
   let myOwnerId = null;
   if (user.role === "owner") {
@@ -164,13 +177,6 @@ import { formatCurrency, showToast } from "../utils/helpers.js";
         status: statusVal,
         search: searchVal
       }));
-    } else if (user.role === "tenant") {
-      ({ data, error } = await listProperties({
-        city: cityVal,
-        status: "Available",
-        search: searchVal,
-        maxBudget
-      }));
     } else {
       ({ data, error } = await listProperties({
         city: cityVal,
@@ -213,12 +219,6 @@ import { formatCurrency, showToast } from "../utils/helpers.js";
       let actions = `
         <a class="btn btn-primary" href="${buildDetailsUrl(property.property_id, source)}">View</a>
       `;
-
-      if (user.role === "tenant") {
-        if (property.owners?.users?.email) {
-          actions += `<a class="btn btn-secondary" href="mailto:${property.owners.users.email}">Contact Owner</a>`;
-        }
-      }
 
       if (canManage(property)) {
         if (isOwnerDashboard) {
@@ -393,11 +393,6 @@ import { formatCurrency, showToast } from "../utils/helpers.js";
     if (!(target instanceof HTMLElement)) return;
     if (target.dataset.closeOwnerEdit === "true") closeOwnerEditModal();
   });
-
-  if (user.role === "tenant" && statusFilter) {
-    statusFilter.value = "Available";
-    statusFilter.disabled = true;
-  }
 
   window.addEventListener("storage", (event) => {
     if (event.key === "propertiesUpdatedAt") {

@@ -26,11 +26,18 @@ async function getOwnerIdForCurrentUser() {
   return data?.owner_id ?? null;
 }
 
-function getBackLink(isOwner) {
-  if (isOwner || source === "owner-dashboard") {
+function getBackLink() {
+  if (source === "owner-dashboard") {
     return {
       label: "Back to owner dashboard",
       href: "../dashboards/owner.html#ownerPropertiesSection"
+    };
+  }
+
+  if (source === "property-list") {
+    return {
+      label: "Back to properties",
+      href: "../pages/property-list.html"
     };
   }
 
@@ -84,7 +91,7 @@ async function loadProperty() {
   const contactBtn = (!isOwner && ownerEmail)
     ? `<a class="btn btn-primary" href="mailto:${ownerEmail}">Contact Owner</a>`
     : "";
-  const backLink = getBackLink(isOwner);
+  const backLink = getBackLink();
 
   const type = String(property.property_type || "").toLowerCase();
   const specs = [];
