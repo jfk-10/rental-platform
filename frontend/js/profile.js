@@ -124,7 +124,7 @@ function setEditMode(enabled) {
 // ── Load profile ─────────────────────────────────────────────
 async function loadProfile() {
   const user = await requireUser(["admin", "owner", "tenant"]);
-  if (!user) return;
+  if (!user) throw new Error("Unauthorised");
 
   baseUser = {
     user_id: user.user_id,
@@ -132,6 +132,25 @@ async function loadProfile() {
     email:   user.email,
     role:    user.role
   };
+
+  const baseProfile = {
+    user_id:           baseUser.user_id,
+    name:              baseUser.name || "",
+    email:             baseUser.email || "",
+    role:              baseUser.role || "",
+    phone:             user.phone || "",
+    city:              user.city || "",
+    address:           user.address || "",
+    owner_type:        user.owner_type || "",
+    aadhaar_no:        user.aadhaar_no || "",
+    occupation:        user.occupation || "",
+    permanent_address: user.permanent_address || ""
+  };
+
+  originalProfile = { ...baseProfile };
+  showRoleFields(user.role);
+  renderProfile(originalProfile);
+  setEditMode(false);
 
   roleProfile = null;
 
@@ -141,7 +160,11 @@ async function loadProfile() {
       .select("phone,address,city,owner_type")
       .eq("user_id", user.user_id)
       .maybeSingle();
-    if (error) { showToast(error.message || "Error loading profile", "error"); return; }
+    if (error) {
+      showToast(error.message || "Error loading profile", "error");
+      storeUserSession(user, baseProfile);
+      return;
+    }
     roleProfile = owner;
   }
 
@@ -151,7 +174,11 @@ async function loadProfile() {
       .select("phone,aadhaar_no,occupation,permanent_address,city")
       .eq("user_id", user.user_id)
       .maybeSingle();
-    if (error) { showToast(error.message || "Error loading profile", "error"); return; }
+    if (error) {
+      showToast(error.message || "Error loading profile", "error");
+      storeUserSession(user, baseProfile);
+      return;
+    }
     roleProfile = tenant;
   }
 

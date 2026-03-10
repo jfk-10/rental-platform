@@ -5,7 +5,7 @@ import { listAgreements } from "../services/agreementService.js";
 import { listMaintenanceRequests } from "../services/maintenanceService.js";
 
 const user = await requireUser(["admin"]);
-if (!user) return;
+if (!user) throw new Error("Unauthorised");
 
 const [{ data: users }, { data: properties }, { data: agreements }, { data: maintenance }] = await Promise.all([
   getAllUsers(),
