@@ -77,11 +77,114 @@
         </div>
       </section>
 
+      <section id="ownerPropertiesSection" class="page-card content-stack">
+        <div class="panel-header">
+          <h2 class="section-title">My Properties</h2>
+          <p class="section-subtitle">Review, inspect, edit, and manage your listings without leaving the dashboard.</p>
+        </div>
+
+        <div class="toolbar toolbar-labeled">
+          <div>
+            <label for="searchInput">Search</label>
+            <input id="searchInput" type="text" placeholder="Title, city, or property type" />
+          </div>
+          <div>
+            <label for="cityFilter">City</label>
+            <input id="cityFilter" type="text" placeholder="e.g. Bangalore" />
+          </div>
+          <div>
+            <label for="statusFilter">Status</label>
+            <select id="statusFilter">
+              <option value="">All status</option>
+              <option value="Available">Available</option>
+              <option value="Rented">Rented</option>
+              <option value="Inactive">Inactive</option>
+            </select>
+          </div>
+          <div class="toolbar-action-wrap">
+            <button id="searchBtn" class="btn btn-primary" type="button">Apply Filters</button>
+          </div>
+          <div class="toolbar-action-wrap">
+            <a class="btn btn-secondary" href="../pages/add-property.html">Add Property</a>
+          </div>
+        </div>
+
+        <div id="propertyCards" class="properties-grid"></div>
+      </section>
+
+      <section id="ownerPropertyDetailsModal" class="workspace-modal" hidden>
+        <div class="workspace-modal__backdrop" data-close-owner-modal="true"></div>
+        <div class="workspace-modal__panel page-card">
+          <div class="workspace-modal__head">
+            <div>
+              <h3 class="section-title" id="ownerPropertyDetailsTitle">Property Details</h3>
+              <p class="section-subtitle">Detailed listing view inside your dashboard.</p>
+            </div>
+            <button class="btn btn-ghost" type="button" id="closeOwnerPropertyModal">Close</button>
+          </div>
+          <div id="ownerPropertyDetailsBody" class="content-stack"></div>
+        </div>
+      </section>
+
+      <section id="ownerPropertyEditModal" class="workspace-modal" hidden>
+        <div class="workspace-modal__backdrop" data-close-owner-edit="true"></div>
+        <div class="workspace-modal__panel page-card">
+          <div class="workspace-modal__head">
+            <div>
+              <h3 class="section-title">Edit Property</h3>
+              <p class="section-subtitle">Update the listing details directly from the owner dashboard.</p>
+            </div>
+            <button class="btn btn-ghost" type="button" id="closeOwnerEditModal">Close</button>
+          </div>
+
+          <form id="ownerEditPropertyForm" class="form-grid">
+            <input id="editPropertyId" type="hidden" />
+            <div>
+              <label for="editPropertyTitle">Title</label>
+              <input id="editPropertyTitle" type="text" required />
+            </div>
+            <div>
+              <label for="editPropertyType">Property Type</label>
+              <input id="editPropertyType" type="text" required />
+            </div>
+            <div class="full">
+              <label for="editPropertyAddress">Address</label>
+              <input id="editPropertyAddress" type="text" required />
+            </div>
+            <div>
+              <label for="editPropertyCity">City</label>
+              <input id="editPropertyCity" type="text" required />
+            </div>
+            <div>
+              <label for="editPropertyRent">Monthly Rent</label>
+              <input id="editPropertyRent" type="number" min="0" required />
+            </div>
+            <div>
+              <label for="editPropertyStatus">Status</label>
+              <select id="editPropertyStatus" required>
+                <option value="Available">Available</option>
+                <option value="Rented">Rented</option>
+                <option value="Inactive">Inactive</option>
+              </select>
+            </div>
+            <div>
+              <label for="editPropertyArea">Area (sqft)</label>
+              <input id="editPropertyArea" type="number" min="0" />
+            </div>
+            <div class="full actions-row">
+              <button class="btn btn-primary" type="submit" id="saveOwnerEditBtn">Save Changes</button>
+              <button class="btn btn-secondary" type="button" id="cancelOwnerEditBtn">Cancel</button>
+            </div>
+          </form>
+        </div>
+      </section>
+
     </section>
   </main>
 
   <script type="module" src="../js/authGuard.js"></script>
   <script type="module" src="../js/modules/owner.js"></script>
+  <script type="module" src="../js/modules/propertyList.js"></script>
   <script type="module" src="../components/navbar.js"></script>
 </body>
 </html>

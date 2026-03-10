@@ -30,7 +30,7 @@ function renderPropertyCard(property) {
     detailParts.push(`🏪 ${property.shop_units} Units`);
   if (property.area_sqft)  detailParts.push(`📐 ${property.area_sqft} sqft`);
 
-  const viewUrl = `${basePrefix}pages/property-details.html?id=${property.property_id}`;
+  const viewUrl = `${basePrefix}pages/property-details.html?id=${property.property_id}&source=discover`;
 
   return `
     <article class="property-card card">

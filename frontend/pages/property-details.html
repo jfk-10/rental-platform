@@ -36,15 +36,25 @@
 <script type="module" src="../js/core/toast.js"></script>
 <script type="module" src="../js/modules/propertyDetails.js"></script>
 <script type="module">
-  // Show user name in nav if already logged in (no redirect)
   import { getStoredUser } from "../js/core/auth.js";
+  const params = new URLSearchParams(window.location.search);
+  const source = params.get("source") || "discover";
   const user = getStoredUser();
   if (user) {
     const nav = document.getElementById("detailsNavActions");
     if (nav) {
+      const dashboardHref = user.role === "owner"
+        ? "../dashboards/owner.html#ownerPropertiesSection"
+        : user.role === "admin"
+          ? "../dashboards/admin.html"
+          : "../pages/discover.html";
+      const dashboardLabel = user.role === "tenant" || source === "discover"
+        ? "Discover"
+        : "Dashboard";
+
       nav.innerHTML = `
         <span class="nav-user-chip">${user.name || user.email || "User"}</span>
-        <a class="btn btn-secondary" href="../pages/property-list.html">My Dashboard</a>
+        <a class="btn btn-secondary" href="${dashboardHref}">${dashboardLabel}</a>
       `;
     }
   }

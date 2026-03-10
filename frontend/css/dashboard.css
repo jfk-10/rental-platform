@@ -92,6 +92,74 @@
   background: #ffffff;
 }
 
+.workspace-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+}
+
+.workspace-modal[hidden] {
+  display: none;
+}
+
+.workspace-modal__backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.54);
+  backdrop-filter: blur(4px);
+}
+
+.workspace-modal__panel {
+  position: relative;
+  z-index: 1;
+  width: min(920px, calc(100vw - 2rem));
+  max-height: calc(100vh - 2rem);
+  overflow: auto;
+}
+
+.workspace-modal__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.property-detail-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(280px, 0.8fr);
+  gap: 1rem;
+}
+
+.property-detail-image {
+  width: 100%;
+  aspect-ratio: 16 / 10;
+  object-fit: cover;
+  border-radius: 14px;
+  background: #e2e8f0;
+}
+
+.property-detail-meta {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.property-detail-specs {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 0.75rem;
+}
+
+.property-detail-spec {
+  padding: 0.8rem;
+  border-radius: 12px;
+  border: 1px solid var(--line);
+  background: #f8fafc;
+}
+
 .property-card--tenant img { aspect-ratio: 16 / 9; }
 
 .empty-state {
@@ -132,6 +200,8 @@
   .dashboard-hero { flex-direction: column; }
   .dashboard-actions { grid-template-columns: 1fr; }
   .gallery-preview { grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); }
+  .workspace-modal__head { flex-direction: column; }
+  .property-detail-grid { grid-template-columns: 1fr; }
 }
 
 @media (max-width: 576px) {
