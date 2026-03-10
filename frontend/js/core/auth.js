@@ -214,7 +214,13 @@ export function updateNavbarAuthState(root = document, user = null) {
 }
 
 export function watchAuthState(onChange) {
-  supabaseClient.auth.onAuthStateChange(async (_event, session) => {
+  supabaseClient.auth.onAuthStateChange(async (event, session) => {
+    if (event === "SIGNED_OUT") {
+      clearStoredUser();
+      onChange(null);
+      return;
+    }
+
     const activeSession = session?.user?.email
       ? session
       : (await resolveSession({ retryIfStored: true })).session;
@@ -237,7 +243,12 @@ export function watchAuthState(onChange) {
 }
 
 export async function logout() {
-  await supabaseClient.auth.signOut();
-  clearStoredUser();
-  window.location.href = getIndexPath();
+  try {
+    await supabaseClient.auth.signOut({ scope: "local" });
+  } catch (error) {
+    console.error("Sign out failed:", error);
+  } finally {
+    clearStoredUser();
+    window.location.href = getIndexPath();
+  }
 }
