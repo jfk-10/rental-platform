@@ -36,7 +36,7 @@ function getRouteHeaderMode(pathname) {
     };
   }
 
-  return { guestOnly: false, source: "", useDashboardNavbar: false };
+  return { guestOnly: false, source: "", useDashboardNavbar: true };
 }
 
 function applyRouteNavigationMode({ useDashboardNavbar }, user) {
@@ -44,6 +44,11 @@ function applyRouteNavigationMode({ useDashboardNavbar }, user) {
   const publicHeader = document.getElementById("publicPropertyHeader");
 
   if (!dashboardNavbar && !publicHeader) return;
+
+  if (dashboardNavbar && !publicHeader) {
+    dashboardNavbar.hidden = false;
+    return;
+  }
 
   const showDashboardNavbar = Boolean(useDashboardNavbar && user);
   if (dashboardNavbar) dashboardNavbar.hidden = !showDashboardNavbar;
