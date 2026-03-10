@@ -20,9 +20,8 @@
         <a href="../pages/discover.html">Discover</a>
       </div>
       <div class="actions-row nav-actions" id="detailsNavActions">
-        <!-- Filled by JS below based on auth state -->
-        <a class="btn btn-secondary" href="../pages/login.html">Login</a>
-        <a class="btn btn-primary"   href="../pages/register.html">Sign up</a>
+        <a id="loginBtn" class="btn btn-secondary" href="../pages/login.html">Login</a>
+        <a id="signupBtn" class="btn btn-primary" href="../pages/register.html">Sign up</a>
       </div>
     </nav>
   </header>
@@ -33,31 +32,8 @@
     </section>
   </main>
 
+<script type="module" src="../js/authGuard.js"></script>
 <script type="module" src="../js/core/toast.js"></script>
 <script type="module" src="../js/modules/propertyDetails.js"></script>
-<script type="module">
-  import { getStoredUser } from "../js/core/auth.js";
-  const params = new URLSearchParams(window.location.search);
-  const source = params.get("source") || "discover";
-  const user = getStoredUser();
-  if (user) {
-    const nav = document.getElementById("detailsNavActions");
-    if (nav) {
-      const dashboardHref = user.role === "owner"
-        ? "../dashboards/owner.html#ownerPropertiesSection"
-        : user.role === "admin"
-          ? "../dashboards/admin.html"
-          : "../pages/discover.html";
-      const dashboardLabel = user.role === "tenant" || source === "discover"
-        ? "Discover"
-        : "Dashboard";
-
-      nav.innerHTML = `
-        <span class="nav-user-chip">${user.name || user.email || "User"}</span>
-        <a class="btn btn-secondary" href="${dashboardHref}">${dashboardLabel}</a>
-      `;
-    }
-  }
-</script>
 </body>
 </html>

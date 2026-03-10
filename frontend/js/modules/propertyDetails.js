@@ -1,4 +1,4 @@
-import { getStoredUser } from "../core/auth.js";
+import { getStoredUser, syncStoredUserWithSession } from "../core/auth.js";
 import { formatCurrency } from "../utils/helpers.js";
 import {
   listProperties,
@@ -11,6 +11,7 @@ const details = document.getElementById("propertyDetails");
 const params = new URLSearchParams(window.location.search);
 const propertyId = Number(params.get("id"));
 const source = params.get("source") || "discover";
+await syncStoredUserWithSession();
 const currentUser = getStoredUser();
 
 async function getOwnerIdForCurrentUser() {
