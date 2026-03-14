@@ -279,6 +279,7 @@ form.addEventListener("submit", async (e) => {
 
   showToast("Property published successfully! ✓", "success");
   localStorage.setItem("propertiesUpdatedAt", String(Date.now()));
+  window.dispatchEvent(new CustomEvent("properties:changed"));
 
   // Cleanup
   setTimeout(() => {
@@ -296,3 +297,4 @@ form.addEventListener("submit", async (e) => {
 // ── Init ─────────────────────────────────────────────────────
 applyTypeVisibility();
 syncPreviewUI();
+

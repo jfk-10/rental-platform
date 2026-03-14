@@ -279,6 +279,7 @@ import { formatCurrency, showToast } from "../utils/helpers.js";
 
     localStorage.setItem("propertiesUpdatedAt", String(Date.now()));
     showToast("Property deleted successfully", "success");
+    window.dispatchEvent(new CustomEvent("properties:changed"));
     closeOwnerDetailsModal();
     await fetchProperties();
   }
@@ -373,6 +374,7 @@ import { formatCurrency, showToast } from "../utils/helpers.js";
     }
 
     localStorage.setItem("propertiesUpdatedAt", String(Date.now()));
+    window.dispatchEvent(new CustomEvent("properties:changed"));
     showToast("Property updated successfully", "success");
     closeOwnerEditModal();
     await fetchProperties();
@@ -402,3 +404,4 @@ import { formatCurrency, showToast } from "../utils/helpers.js";
 
   await fetchProperties();
 })();
+
