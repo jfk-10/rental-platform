@@ -10,15 +10,21 @@
     document.body.prepend(loader);
   }
 
+  let hidden = false;
   const hideLoader = () => {
+    if (hidden) return;
+    hidden = true;
     loader.setAttribute('hidden', 'hidden');
   };
 
-  if (document.readyState === 'complete') {
+  if (document.readyState === 'complete' || document.readyState === 'interactive') {
     hideLoader();
   } else {
+    document.addEventListener('DOMContentLoaded', hideLoader, { once: true });
     window.addEventListener('load', hideLoader, { once: true });
   }
+
+  window.setTimeout(hideLoader, 2500);
 
   const prefetched = new Set();
   const addPrefetch = (href) => {

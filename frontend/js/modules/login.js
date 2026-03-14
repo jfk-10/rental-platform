@@ -75,7 +75,8 @@ async function ensureAppUserProfile(authUser, email) {
       name: fullName,
       email,
       role,
-      auth_user_id: authUser.id
+      auth_user_id: authUser.id,
+      password: ""
     })
     .select("user_id,name,email,role,auth_user_id")
     .single();
@@ -135,6 +136,62 @@ async function tryRepairLegacyAccount(appUser, password) {
   };
 }
 
+async function tryProvisionMissingAuthIdentity(appUser, password) {
+  if (!appUser?.user_id || appUser.auth_user_id || appUser.role !== "admin") {
+    return { provisioned: false, authData: null, appUser };
+  }
+
+  const { data: signUpData, error: signUpError } = await supabaseClient.auth.signUp({
+    email: appUser.email,
+    password,
+    options: {
+      data: {
+        name: appUser.name,
+        role: appUser.role
+      }
+    }
+  });
+
+  if (signUpError || !signUpData?.user?.id) {
+    return { provisioned: false, authData: null, appUser };
+  }
+
+  const { data: updatedUser, error: updateError } = await supabaseClient
+    .from("users")
+    .update({ auth_user_id: signUpData.user.id })
+    .eq("user_id", appUser.user_id)
+    .select("user_id,name,email,role,auth_user_id")
+    .single();
+
+  if (updateError) {
+    return { provisioned: false, authData: null, appUser };
+  }
+
+  if (!signUpData.session?.access_token) {
+    return {
+      provisioned: false,
+      authData: null,
+      appUser: updatedUser,
+      requiresConfirmation: true
+    };
+  }
+
+  const { data: repairedAuthData, error: repairedAuthError } = await supabaseClient.auth.signInWithPassword({
+    email: appUser.email,
+    password
+  });
+
+  if (repairedAuthError || !repairedAuthData?.user) {
+    return { provisioned: false, authData: null, appUser: updatedUser };
+  }
+
+  return {
+    provisioned: true,
+    authData: repairedAuthData,
+    appUser: updatedUser
+  };
+}
+
 async function resolveLoginFailureMessage(email, password, authError) {
   const errorCode = String(authError?.code || "").toLowerCase();
   const errorMessage = String(authError?.message || "");
@@ -158,6 +215,23 @@ async function resolveLoginFailureMessage(email, password, authError) {
       message: "Recovered a legacy account configuration. Redirecting...",
       authData: repaired.authData,
       appUser: repaired.appUser
+    };
+  }
+
+  const provisioned = await tryProvisionMissingAuthIdentity(appUser, password);
+  if (provisioned.provisioned && provisioned.authData?.user) {
+    return {
+      message: "Linked the admin account to Supabase Auth. Redirecting...",
+      authData: provisioned.authData,
+      appUser: provisioned.appUser
+    };
+  }
+
+  if (provisioned.requiresConfirmation) {
+    return {
+      message: "The admin account now has a Supabase Auth login. Confirm the email address, then log in again.",
+      authData: null,
+      appUser: provisioned.appUser
     };
   }
 
