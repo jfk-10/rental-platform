@@ -1,5 +1,5 @@
 import { requireUser } from "../core/auth.js";
-import { getAllUsers } from "../services/userService.js";
+import { getOwners, getTenants } from "../services/userService.js";
 import { listProperties } from "../services/propertyService.js";
 import { listAgreements } from "../services/agreementService.js";
 import { showToast } from "../utils/helpers.js";
@@ -162,15 +162,15 @@ async function loadAdminDashboard() {
   setDashboardStatus("Loading owner, tenant, property, and agreement summaries...");
 
   try {
-    const [usersResult, propertiesResult, agreementsResult] = await Promise.all([
-      getAllUsers(),
+    const [ownersResult, tenantsResult, propertiesResult, agreementsResult] = await Promise.all([
+      getOwners(),
+      getTenants(),
       listProperties(),
       listAgreements()
     ]);
 
-    const users = extractData(usersResult);
-    const owners = users.filter((item) => item.role === "owner");
-    const tenants = users.filter((item) => item.role === "tenant");
+    const owners = extractData(ownersResult);
+    const tenants = extractData(tenantsResult);
     const properties = extractData(propertiesResult);
     const agreements = extractData(agreementsResult);
 
@@ -187,7 +187,8 @@ async function loadAdminDashboard() {
     renderTenantsTable(tenants, tenantStats);
 
     const errors = [
-      usersResult?.error,
+      ownersResult?.error,
+      tenantsResult?.error,
       propertiesResult?.error,
       agreementsResult?.error
     ].filter(Boolean);

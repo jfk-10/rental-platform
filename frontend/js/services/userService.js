@@ -73,7 +73,7 @@ async function getRoleProfileByUserId(userId, role) {
 export async function getOwners() {
   const { data, error } = await supabaseClient
     .from("owners")
-    .select("owner_id,user_id,phone,address,city,owner_type,users!owners_user_id_fkey(name,email)")
+    .select("owner_id,user_id,phone,address,city,owner_type")
     .order("owner_id", { ascending: true });
 
   const records = await attachUsers(data || []);
@@ -87,7 +87,7 @@ export async function getOwners() {
 export async function getTenants() {
   const { data, error } = await supabaseClient
     .from("tenants")
-    .select("tenant_id,user_id,phone,aadhaar_no,occupation,permanent_address,city,users!tenants_user_id_fkey(name,email)")
+    .select("tenant_id,user_id,phone,aadhaar_no,occupation,permanent_address,city")
     .order("tenant_id", { ascending: true });
 
   const records = await attachUsers(data || []);

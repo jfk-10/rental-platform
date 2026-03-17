@@ -1,5 +1,5 @@
 import { requireUser } from "../core/auth.js";
-import { getAllUsers } from "../services/userService.js";
+import { getTenants } from "../services/userService.js";
 import { listProperties } from "../services/propertyService.js";
 import { createAgreement, listAgreements, updateAgreementStatus, updateAgreement, deleteAgreement } from "../services/agreementService.js";
 import { formatCurrency, formatDate, showToast } from "../utils/helpers.js";
@@ -98,7 +98,7 @@ function getAgreementDisplayStatus(agreement) {
     return "Pending Edit Approval";
   }
 
-  return getAgreementStatusLabel(agreement.agreement_status);
+  return getAgreementStatusLabel(getEffectiveAgreementStatus(agreement));
 }
 
 function isAgreementOwner(agreement) {
@@ -107,6 +107,61 @@ function isAgreementOwner(agreement) {
 
 function isAgreementTenant(agreement) {
   return agreement.tenants?.user_id === user.user_id;
+}
+
+function getTodayLocalIso() {
+  const today = new Date();
+  const year = today.getFullYear();
+  const month = String(today.getMonth() + 1).padStart(2, "0");
+  const day = String(today.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+function hasAgreementEnded(agreement) {
+  const endDate = String(agreement?.end_date || "").slice(0, 10);
+  if (!endDate) return false;
+  return endDate < getTodayLocalIso();
+}
+
+function getEffectiveAgreementStatus(agreement) {
+  const rawStatus = agreement?.agreement_status || "-";
+  if (normalizeStatus(rawStatus) === normalizeStatus(AGREEMENT_STATUS.active) && hasAgreementEnded(agreement)) {
+    return AGREEMENT_STATUS.completed;
+  }
+  return rawStatus;
+}
+
+async function syncCompletedAgreements(agreements) {
+  const endedActiveAgreements = agreements.filter((agreement) =>
+    normalizeStatus(agreement.agreement_status) === normalizeStatus(AGREEMENT_STATUS.active)
+      && hasAgreementEnded(agreement)
+  );
+
+  if (!endedActiveAgreements.length) {
+    return agreements;
+  }
+
+  const results = await Promise.all(
+    endedActiveAgreements.map((agreement) =>
+      updateAgreementStatus(agreement.agreement_id, AGREEMENT_STATUS.completed)
+    )
+  );
+
+  const failedUpdate = results.find((result) => result?.error);
+  if (failedUpdate?.error) {
+    console.error("Agreement auto-complete failed:", failedUpdate.error);
+    return agreements.map((agreement) => ({
+      ...agreement,
+      agreement_status: getEffectiveAgreementStatus(agreement)
+    }));
+  }
+
+  const completedIds = new Set(endedActiveAgreements.map((agreement) => agreement.agreement_id));
+  return agreements.map((agreement) => (
+    completedIds.has(agreement.agreement_id)
+      ? { ...agreement, agreement_status: AGREEMENT_STATUS.completed }
+      : agreement
+  ));
 }
 
 if (!canCreateAgreement() && adminForm) {
@@ -121,12 +176,12 @@ if (agreementStatusInput) {
 async function loadSelectOptions() {
   if (!canCreateAgreement()) return;
 
-  const [{ data: properties, error: propertyError }, usersResult] = await Promise.all([
+  const [{ data: properties, error: propertyError }, tenantsResult] = await Promise.all([
     listProperties({ status: "Available" }),
-    getAllUsers()
+    getTenants()
   ]);
-  const tenantError = usersResult?.error;
-  const tenants = (usersResult?.data || []).filter((item) => item.role === "tenant");
+  const tenantError = tenantsResult?.error;
+  const tenants = tenantsResult?.data || [];
 
   if (propertyError || tenantError) {
     console.error(propertyError || tenantError);
@@ -154,16 +209,12 @@ function filterByRole(agreements) {
 }
 
 function actionButtons(agreement) {
-  const agreementStatus = normalizeStatus(agreement.agreement_status);
+  const agreementStatus = normalizeStatus(getEffectiveAgreementStatus(agreement));
   const requests = getEditRequests();
   const pendingEdit = requests[agreement.agreement_id]?.status === "PENDING_EDIT";
   const isOwner = user.role === "owner" && isAgreementOwner(agreement);
   const isTenant = user.role === "tenant" && isAgreementTenant(agreement);
   const actions = [];
-
-  if (user.role === "admin" && agreementStatus === normalizeStatus(AGREEMENT_STATUS.active)) {
-    actions.push(`<button class="btn btn-secondary completeAgreementBtn" data-id="${agreement.agreement_id}">Mark Completed</button>`);
-  }
 
   if (isOwner && isPendingOwnerStatus(agreement.agreement_status)) {
     actions.push(`<button class="btn btn-primary approveAgreementBtn" data-id="${agreement.agreement_id}">Approve</button>`);
@@ -198,7 +249,8 @@ async function loadAgreementList() {
     return;
   }
 
-  const agreements = filterByRole(data || []);
+  const syncedAgreements = await syncCompletedAgreements(data || []);
+  const agreements = filterByRole(syncedAgreements);
 
   agreementTableBody.innerHTML = agreements.length
     ? agreements
@@ -339,18 +391,6 @@ async function rejectAgreement(agreementId) {
   await loadAgreementList();
 }
 
-async function completeAgreement(agreementId) {
-  const { error } = await updateAgreementStatus(agreementId, AGREEMENT_STATUS.completed);
-  if (error) {
-    console.error(error);
-    showToast("Failed to complete agreement", "error");
-    return;
-  }
-
-  showToast("Agreement marked as completed.", "success");
-  await loadAgreementList();
-}
-
 async function handleDeleteAgreement(agreementId) {
   if (user.role !== "admin") {
     showToast("Only admin can delete agreements.", "error");
@@ -390,7 +430,6 @@ agreementTableBody.addEventListener("click", async (event) => {
   const id = Number(target.dataset.id);
   if (!id) return;
 
-  if (target.classList.contains("completeAgreementBtn")) await completeAgreement(id);
   if (target.classList.contains("approveAgreementBtn")) await approveAgreement(id);
   if (target.classList.contains("rejectAgreementBtn")) await rejectAgreement(id);
   if (target.classList.contains("editAgreementBtn")) await requestAgreementEdit(id);
