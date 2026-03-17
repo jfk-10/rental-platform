@@ -153,7 +153,7 @@ async function tryProvisionMissingAuthIdentity(appUser, password) {
   });
 
   if (signUpError || !signUpData?.user?.id) {
-    return { provisioned: false, authData: null, appUser };
+    return { provisioned: false, authData: null, appUser, signUpError };
   }
 
   const { data: updatedUser, error: updateError } = await supabaseClient
@@ -224,6 +224,12 @@ async function resolveLoginFailureMessage(email, password, authError) {
       message: "Linked the admin account to Supabase Auth. Redirecting...",
       authData: provisioned.authData,
       appUser: provisioned.appUser
+    };
+  } else if (provisioned.signUpError) {
+    return {
+      message: `Admin account setup failed: ${provisioned.signUpError.message}`,
+      authData: null,
+      appUser
     };
   }
 

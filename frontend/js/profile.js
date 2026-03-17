@@ -104,7 +104,7 @@ function renderProfile(profile) {
 }
 
 function syncEditState() {
-  const canEdit = baseUser?.role === "owner" || baseUser?.role === "tenant";
+  const canEdit = baseUser?.role === "owner" || baseUser?.role === "tenant" || baseUser?.role === "admin";
   const editableFields = new Set(getEditableFieldIds());
 
   profileCard?.classList.toggle("is-editing", editMode && canEdit);
@@ -124,7 +124,7 @@ function syncEditState() {
 }
 
 function setEditMode(enabled) {
-  editMode = Boolean(enabled && (baseUser?.role === "owner" || baseUser?.role === "tenant"));
+  editMode = Boolean(enabled && (baseUser?.role === "owner" || baseUser?.role === "tenant" || baseUser?.role === "admin"));
   syncEditState();
 }
 

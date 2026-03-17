@@ -123,7 +123,7 @@ async function loadBrowseRentals() {
 
   const search = searchInput?.value.trim() || "";
   const city = cityFilter?.value.trim() || "";
-  const status = statusFilter?.value || "Available";
+  const status = statusFilter ? statusFilter.value : "Available";
   const maxBudget = Number(budgetFilter?.value || 0);
 
   const { data, error } = await listProperties({
@@ -187,7 +187,7 @@ browseGrid?.addEventListener("click", (event) => {
     return;
   }
 
-  openDetailsModal(property);
+  window.location.href = `../pages/tenant-property.html?id=${propertyId}`;
 });
 
 closeDetailsBtn?.addEventListener("click", closeDetailsModal);

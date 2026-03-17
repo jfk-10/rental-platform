@@ -99,7 +99,7 @@ export async function listProperties({ city = "", status = "", search = "", maxB
     .order("created_at", { ascending: false });
 
   if (city) query = query.ilike("city", `%${city}%`);
-  if (status) query = query.eq("status", status);
+  if (status) query = query.ilike("status", status);
   if (search) query = query.or(`title.ilike.%${search}%,city.ilike.%${search}%,property_type.ilike.%${search}%`);
   if (maxBudget) query = query.lte("rent_amount", maxBudget);
 
@@ -138,7 +138,7 @@ export async function getPropertiesByOwnerUserId(userId, { city = "", status = "
     .order("property_id", { ascending: false });
 
   if (city) query = query.ilike("city", `%${city}%`);
-  if (status) query = query.eq("status", status);
+  if (status) query = query.ilike("status", status);
   if (search) query = query.or(`title.ilike.%${search}%,city.ilike.%${search}%,property_type.ilike.%${search}%`);
 
   return runPropertyListQuery(query);

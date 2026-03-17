@@ -88,7 +88,7 @@ import { formatCurrency, showToast } from "../utils/helpers.js";
   }
 
   function buildDetailsUrl(propertyId, source) {
-    return `./property-details.html?id=${propertyId}&source=${encodeURIComponent(source)}`;
+    return `./public-property.html?id=${propertyId}&source=${encodeURIComponent(source)}`;
   }
 
   function openOwnerDetailsModal(property) {

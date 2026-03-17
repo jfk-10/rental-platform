@@ -8,13 +8,14 @@ const ROUTE_GUARDS = {
 };
 
 function getPropertyDetailsSource(pathname) {
-  if (!pathname.endsWith("/pages/property-details.html")) return "";
+  if (!pathname.endsWith("/pages/public-property.html") && !pathname.endsWith("/pages/tenant-property.html")) return "";
   return new URLSearchParams(window.location.search).get("source") || "";
 }
 
 function getRequiredRoleForPath(pathname) {
+  if (pathname.endsWith("/pages/tenant-property.html")) return "tenant";
+
   const source = getPropertyDetailsSource(pathname);
-  if (source === "browse-rentals") return "tenant";
   if (source === "owner-dashboard") return "owner";
   if (source === "property-list") return "admin";
 
@@ -27,13 +28,17 @@ function getRouteHeaderMode(pathname) {
     return { guestOnly: true, source: "discover", useDashboardNavbar: false };
   }
 
-  if (pathname.endsWith("/pages/property-details.html")) {
+  if (pathname.endsWith("/pages/public-property.html")) {
     const source = getPropertyDetailsSource(pathname);
     return {
-      guestOnly: source === "discover",
-      source,
-      useDashboardNavbar: ["browse-rentals", "owner-dashboard", "property-list"].includes(source)
+      guestOnly: source === "discover" || !source,
+      source: source || "discover",
+      useDashboardNavbar: ["owner-dashboard", "property-list"].includes(source)
     };
+  }
+
+  if (pathname.endsWith("/pages/tenant-property.html")) {
+    return { guestOnly: false, source: "browse-rentals", useDashboardNavbar: true };
   }
 
   return { guestOnly: false, source: "", useDashboardNavbar: true };
@@ -102,7 +107,7 @@ function updatePublicAuthButtonsVisibility() {
       href = "../dashboards/owner.html";
     } else if (user.role === "admin") {
       href = "../dashboards/admin.html";
-    } else if (pathname.endsWith("/pages/property-details.html") && source === "browse-rentals") {
+    } else if (pathname.endsWith("/pages/tenant-property.html")) {
       href = "../pages/browse-rentals.html";
       label = "Browse Rentals";
     }

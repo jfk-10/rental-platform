@@ -26,7 +26,7 @@ function renderPropertyCard(property) {
   if (property.shop_units != null && ["shop", "commercial"].includes(normalizedType)) detailParts.push(`${property.shop_units} Units`);
   if (property.area_sqft) detailParts.push(`${property.area_sqft} sqft`);
 
-  const viewUrl = `${basePrefix}pages/property-details.html?id=${property.property_id}&source=discover`;
+  const viewUrl = `${basePrefix}pages/public-property.html?id=${property.property_id}&source=discover`;
 
   return `
     <article class="property-card card">
