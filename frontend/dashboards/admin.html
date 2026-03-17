@@ -15,7 +15,12 @@
   <main class="dashboard-layout dashboard-layout--full">
     <section class="dashboard-shell">
       <section class="page-card">
-        <h1 class="section-title">Admin Dashboard</h1>
+        <div class="panel-header">
+          <div>
+            <h1 class="section-title">Admin Dashboard</h1>
+            <p class="section-subtitle" id="adminDashboardStatus">Loading platform metrics...</p>
+          </div>
+        </div>
         <div class="kpi-grid">
           <article class="kpi-card metric-card"><p class="kpi-label">Total Users</p><p class="kpi-value" id="adminTotalUsers">0</p></article>
           <article class="kpi-card metric-card"><p class="kpi-label">Total Properties</p><p class="kpi-value" id="adminTotalProperties">0</p></article>
