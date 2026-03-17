@@ -114,6 +114,25 @@ function getCachedUserForEmail(email, authUserId = "") {
   return cachedUser;
 }
 
+function hasOwnField(record, key) {
+  return Object.prototype.hasOwnProperty.call(record || {}, key);
+}
+
+function isHydratedRoleProfile(user) {
+  if (!user?.role) return false;
+  if (user.role === "admin") return true;
+
+  if (user.role === "owner") {
+    return ["phone", "city", "address", "owner_type"].every((key) => hasOwnField(user, key));
+  }
+
+  if (user.role === "tenant") {
+    return ["phone", "city", "aadhaar_no", "occupation", "permanent_address"].every((key) => hasOwnField(user, key));
+  }
+
+  return true;
+}
+
 export function getStoredAuthUser() {
   migrateLegacyCache();
   return readJson(sessionStorage, SESSION_KEYS.authUser);
@@ -264,7 +283,7 @@ export async function syncStoredUserWithSession() {
 
   if (session?.user?.email) {
     const cachedUser = getCachedUserForEmail(session.user.email, session.user.id);
-    if (cachedUser?.role) {
+    if (cachedUser?.role && isHydratedRoleProfile(cachedUser)) {
       storeUserSession(session.user, cachedUser, { mode: "supabase" });
       return cachedUser;
     }
@@ -317,7 +336,7 @@ export async function requireUser(allowedRoles = []) {
   }
 
   const cachedUser = getCachedUserForEmail(session.user.email, session.user.id);
-  const user = cachedUser?.role
+  const user = cachedUser?.role && isHydratedRoleProfile(cachedUser)
     ? cachedUser
     : await getUserWithProfileByEmail(session.user.email, { authUserId: session.user.id });
 
@@ -384,7 +403,7 @@ export function watchAuthState(onChange) {
     }
 
     const cachedUser = getCachedUserForEmail(activeSession.user.email, activeSession.user.id);
-    if (cachedUser?.role) {
+    if (cachedUser?.role && isHydratedRoleProfile(cachedUser)) {
       storeUserSession(activeSession.user, cachedUser, { mode: "supabase" });
       onChange(cachedUser);
       return;
