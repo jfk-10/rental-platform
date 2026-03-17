@@ -1,4 +1,4 @@
-import { requireUser } from "../core/auth.js";
+import { getStoredAuthUser, requireUser, storeUserSession } from "../core/auth.js";
 import supabaseClient from "../core/supabaseClient.js";
 import { listAgreements } from "../services/agreementService.js";
 import { listPayments } from "../services/paymentService.js";
@@ -101,13 +101,15 @@ tenantForm?.addEventListener("submit", async (e) => {
     return;
   }
 
-  // Update localStorage cache so profile page also reflects new data
-  try {
-    const stored = JSON.parse(localStorage.getItem("appUser") || "{}");
-    localStorage.setItem("appUser", JSON.stringify({
-      ...stored, phone, aadhaar_no, occupation, city, permanent_address
-    }));
-  } catch (_) { /* ignore */ }
+  const authUser = getStoredAuthUser() || { id: user.auth_user_id || user.user_id, email: user.email };
+  storeUserSession(authUser, {
+    ...user,
+    phone,
+    aadhaar_no,
+    occupation,
+    city,
+    permanent_address
+  });
 
   showToast("Profile saved ✓", "success");
   hideBanner(); // permanently hide — no re-show on close since upsert succeeded

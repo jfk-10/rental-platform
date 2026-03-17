@@ -3,6 +3,29 @@ import supabaseClient from "./supabaseClient.js";
 const SESSION_RETRY_DELAYS_MS = [0, 120, 250, 500];
 const STORED_SESSION_GRACE_MS = 15000;
 
+const SESSION_KEYS = {
+  authUser: "user",
+  appUser: "appUser",
+  userId: "userId",
+  role: "role",
+  name: "name",
+  email: "userEmail",
+  bootstrapAt: "sessionBootstrapAt",
+  mode: "sessionMode"
+};
+
+const LEGACY_LOCAL_KEYS = [
+  SESSION_KEYS.authUser,
+  SESSION_KEYS.appUser,
+  SESSION_KEYS.userId,
+  SESSION_KEYS.role,
+  SESSION_KEYS.name,
+  SESSION_KEYS.email,
+  SESSION_KEYS.bootstrapAt,
+  SESSION_KEYS.mode,
+  "loggedInUser"
+];
+
 function getLoginPath() {
   return "/pages/login.html";
 }
@@ -11,53 +34,125 @@ function getIndexPath() {
   return "/index.html";
 }
 
-export function getStoredAuthUser() {
-  const raw = localStorage.getItem("user");
+function readJson(storage, key) {
+  const raw = storage.getItem(key);
   if (!raw) return null;
+
   try {
     return JSON.parse(raw);
   } catch {
     return null;
   }
+}
+
+function normalizeEmail(value) {
+  return String(value || "").trim().toLowerCase();
+}
+
+function getSessionValue(key) {
+  return sessionStorage.getItem(key) ?? localStorage.getItem(key);
+}
+
+function setSessionValue(key, value) {
+  if (value === null || value === undefined || value === "") {
+    sessionStorage.removeItem(key);
+    return;
+  }
+
+  sessionStorage.setItem(key, String(value));
+}
+
+function setSessionJson(key, value) {
+  if (!value) {
+    sessionStorage.removeItem(key);
+    return;
+  }
+
+  sessionStorage.setItem(key, JSON.stringify(value));
+}
+
+function clearLegacyLocalCache() {
+  LEGACY_LOCAL_KEYS.forEach((key) => {
+    localStorage.removeItem(key);
+  });
+}
+
+function migrateLegacyCache() {
+  if (!sessionStorage.getItem(SESSION_KEYS.authUser)) {
+    const authUser = readJson(localStorage, SESSION_KEYS.authUser);
+    if (authUser) setSessionJson(SESSION_KEYS.authUser, authUser);
+  }
+
+  if (!sessionStorage.getItem(SESSION_KEYS.appUser)) {
+    const appUser = readJson(localStorage, SESSION_KEYS.appUser);
+    if (appUser) setSessionJson(SESSION_KEYS.appUser, appUser);
+  }
+
+  [SESSION_KEYS.userId, SESSION_KEYS.role, SESSION_KEYS.name, SESSION_KEYS.email, SESSION_KEYS.bootstrapAt, SESSION_KEYS.mode]
+    .forEach((key) => {
+      if (sessionStorage.getItem(key) == null) {
+        const value = localStorage.getItem(key);
+        if (value != null) {
+          sessionStorage.setItem(key, value);
+        }
+      }
+    });
+
+  clearLegacyLocalCache();
+}
+
+function getStoredSessionMode() {
+  migrateLegacyCache();
+  return getSessionValue(SESSION_KEYS.mode) || "supabase";
+}
+
+function getCachedUserForEmail(email, authUserId = "") {
+  const cachedUser = getStoredUser();
+  if (!cachedUser?.email) return null;
+  if (normalizeEmail(cachedUser.email) !== normalizeEmail(email)) return null;
+  if (authUserId && cachedUser.auth_user_id && cachedUser.auth_user_id !== authUserId) return null;
+  return cachedUser;
+}
+
+export function getStoredAuthUser() {
+  migrateLegacyCache();
+  return readJson(sessionStorage, SESSION_KEYS.authUser);
 }
 
 export function getStoredUser() {
-  const raw = localStorage.getItem("appUser");
-  if (!raw) return null;
-  try {
-    return JSON.parse(raw);
-  } catch {
-    return null;
-  }
+  migrateLegacyCache();
+  return readJson(sessionStorage, SESSION_KEYS.appUser);
 }
 
-export function storeUserSession(authUser, appUser = null) {
+export function storeUserSession(authUser, appUser = null, { mode = getStoredSessionMode() } = {}) {
+  migrateLegacyCache();
+
   if (authUser) {
-    localStorage.setItem("user", JSON.stringify({
+    setSessionJson(SESSION_KEYS.authUser, {
       id: authUser.id,
       email: authUser.email || ""
-    }));
-    localStorage.setItem("sessionBootstrapAt", String(Date.now()));
+    });
   }
 
   if (appUser) {
-    localStorage.setItem("appUser", JSON.stringify(appUser));
-    localStorage.setItem("userId", String(appUser.user_id));
-    localStorage.setItem("role", appUser.role || "");
-    localStorage.setItem("name", appUser.name || "");
-    localStorage.setItem("userEmail", appUser.email || "");
+    setSessionJson(SESSION_KEYS.appUser, appUser);
+    setSessionValue(SESSION_KEYS.userId, appUser.user_id);
+    setSessionValue(SESSION_KEYS.role, appUser.role || "");
+    setSessionValue(SESSION_KEYS.name, appUser.name || "");
+    setSessionValue(SESSION_KEYS.email, appUser.email || "");
   }
+
+  setSessionValue(SESSION_KEYS.bootstrapAt, Date.now());
+  setSessionValue(SESSION_KEYS.mode, mode);
+  clearLegacyLocalCache();
 }
 
 export function clearStoredUser() {
-  localStorage.removeItem("user");
-  localStorage.removeItem("appUser");
-  localStorage.removeItem("userId");
-  localStorage.removeItem("role");
-  localStorage.removeItem("name");
-  localStorage.removeItem("userEmail");
-  localStorage.removeItem("loggedInUser");
-  localStorage.removeItem("sessionBootstrapAt");
+  Object.values(SESSION_KEYS).forEach((key) => {
+    sessionStorage.removeItem(key);
+  });
+
+  clearLegacyLocalCache();
 }
 
 function shouldRetrySessionLookup() {
@@ -65,8 +160,7 @@ function shouldRetrySessionLookup() {
 }
 
 function hasFreshStoredSession() {
-  const raw = localStorage.getItem("sessionBootstrapAt");
-  const bootstrapAt = Number(raw || 0);
+  const bootstrapAt = Number(getSessionValue(SESSION_KEYS.bootstrapAt) || 0);
   if (!bootstrapAt) return false;
   return Date.now() - bootstrapAt <= STORED_SESSION_GRACE_MS;
 }
@@ -99,52 +193,87 @@ async function resolveSession({ retryIfStored = false } = {}) {
   return { session: null, error: lastError };
 }
 
-async function getUserWithProfileByEmail(email) {
-  const normalizedEmail = String(email || "").trim().toLowerCase();
+async function getUserWithProfileByEmail(email, { authUserId = "" } = {}) {
+  const normalizedEmail = normalizeEmail(email);
 
   const { data: user, error: userError } = await supabaseClient
     .from("users")
     .select("user_id,name,email,role,auth_user_id")
     .eq("email", normalizedEmail)
-    .single();
+    .maybeSingle();
 
   if (userError || !user) return null;
 
-  let ownerProfile = null;
-  let tenantProfile = null;
+  let normalizedUser = user;
 
-  if (user.role === "owner") {
+  if (authUserId && !user.auth_user_id) {
+    const { data: updatedUser, error: updateError } = await supabaseClient
+      .from("users")
+      .update({ auth_user_id: authUserId })
+      .eq("user_id", user.user_id)
+      .select("user_id,name,email,role,auth_user_id")
+      .single();
+
+    if (!updateError && updatedUser) {
+      normalizedUser = updatedUser;
+    }
+  }
+
+  let roleProfile = null;
+
+  if (normalizedUser.role === "owner") {
     const { data } = await supabaseClient
       .from("owners")
       .select("phone,address,city,owner_type")
-      .eq("user_id", user.user_id)
+      .eq("user_id", normalizedUser.user_id)
       .maybeSingle();
-    ownerProfile = data;
+    roleProfile = data;
   }
 
-  if (user.role === "tenant") {
+  if (normalizedUser.role === "tenant") {
     const { data } = await supabaseClient
       .from("tenants")
       .select("phone,aadhaar_no,occupation,permanent_address,city")
-      .eq("user_id", user.user_id)
+      .eq("user_id", normalizedUser.user_id)
       .maybeSingle();
-    tenantProfile = data;
+    roleProfile = data;
   }
 
-  const merged = {
-    ...user,
-    ...(ownerProfile || tenantProfile || {})
+  const mergedUser = {
+    ...normalizedUser,
+    ...(roleProfile || {})
   };
 
-  storeUserSession({ id: user.auth_user_id || user.user_id, email: user.email }, merged);
-  return merged;
+  storeUserSession(
+    { id: authUserId || mergedUser.auth_user_id || mergedUser.user_id, email: mergedUser.email },
+    mergedUser,
+    { mode: "supabase" }
+  );
+
+  return mergedUser;
+}
+
+function getLocalModeUser() {
+  if (getStoredSessionMode() !== "local") return null;
+  return getStoredUser();
 }
 
 export async function syncStoredUserWithSession() {
   const { session, error } = await resolveSession({ retryIfStored: true });
+  const localModeUser = getLocalModeUser();
 
   if (session?.user?.email) {
-    return getUserWithProfileByEmail(session.user.email);
+    const cachedUser = getCachedUserForEmail(session.user.email, session.user.id);
+    if (cachedUser?.role) {
+      storeUserSession(session.user, cachedUser, { mode: "supabase" });
+      return cachedUser;
+    }
+
+    return getUserWithProfileByEmail(session.user.email, { authUserId: session.user.id });
+  }
+
+  if (localModeUser) {
+    return localModeUser;
   }
 
   const storedUser = getStoredUser();
@@ -152,16 +281,22 @@ export async function syncStoredUserWithSession() {
     return storedUser;
   }
 
-  if (error || !session?.user?.email) {
-    clearStoredUser();
-    return null;
-  }
-
+  clearStoredUser();
   return null;
 }
 
 export async function requireUser(allowedRoles = []) {
   const { session, error } = await resolveSession({ retryIfStored: true });
+  const localModeUser = getLocalModeUser();
+
+  if (!session?.user?.email && localModeUser) {
+    if (allowedRoles.length && !allowedRoles.includes(localModeUser.role)) {
+      window.location.href = getIndexPath();
+      return null;
+    }
+
+    return localModeUser;
+  }
 
   if (!error && !session?.user?.email) {
     const storedUser = getStoredUser();
@@ -170,6 +305,7 @@ export async function requireUser(allowedRoles = []) {
         window.location.href = getIndexPath();
         return null;
       }
+
       return storedUser;
     }
   }
@@ -180,7 +316,11 @@ export async function requireUser(allowedRoles = []) {
     return null;
   }
 
-  const user = await getUserWithProfileByEmail(session.user.email);
+  const cachedUser = getCachedUserForEmail(session.user.email, session.user.id);
+  const user = cachedUser?.role
+    ? cachedUser
+    : await getUserWithProfileByEmail(session.user.email, { authUserId: session.user.id });
+
   if (!user) {
     clearStoredUser();
     window.location.href = getLoginPath();
@@ -226,6 +366,12 @@ export function watchAuthState(onChange) {
       : (await resolveSession({ retryIfStored: true })).session;
 
     if (!activeSession?.user?.email) {
+      const localModeUser = getLocalModeUser();
+      if (localModeUser) {
+        onChange(localModeUser);
+        return;
+      }
+
       const storedUser = getStoredUser();
       if (storedUser && hasFreshStoredSession()) {
         onChange(storedUser);
@@ -237,14 +383,25 @@ export function watchAuthState(onChange) {
       return;
     }
 
-    const user = await getUserWithProfileByEmail(activeSession.user.email);
+    const cachedUser = getCachedUserForEmail(activeSession.user.email, activeSession.user.id);
+    if (cachedUser?.role) {
+      storeUserSession(activeSession.user, cachedUser, { mode: "supabase" });
+      onChange(cachedUser);
+      return;
+    }
+
+    const user = await getUserWithProfileByEmail(activeSession.user.email, { authUserId: activeSession.user.id });
     onChange(user);
   });
 }
 
 export async function logout() {
+  const mode = getStoredSessionMode();
+
   try {
-    await supabaseClient.auth.signOut({ scope: "local" });
+    if (mode !== "local") {
+      await supabaseClient.auth.signOut({ scope: "local" });
+    }
   } catch (error) {
     console.error("Sign out failed:", error);
   } finally {

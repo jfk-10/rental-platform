@@ -92,16 +92,17 @@ async function runSinglePropertyQuery(query) {
   };
 }
 
-export async function listProperties({ city = "", status = "", search = "", maxBudget = 0 } = {}) {
+export async function listProperties({ city = "", status = "", search = "", maxBudget = 0, limit = 0 } = {}) {
   let query = supabaseClient
     .from("properties")
     .select(PROPERTY_SELECT_QUERY)
     .order("created_at", { ascending: false });
 
   if (city) query = query.ilike("city", `%${city}%`);
-  if (status) query = query.ilike("status", status);
+  if (status) query = query.eq("status", status);
   if (search) query = query.or(`title.ilike.%${search}%,city.ilike.%${search}%,property_type.ilike.%${search}%`);
   if (maxBudget) query = query.lte("rent_amount", maxBudget);
+  if (limit) query = query.limit(limit);
 
   return runPropertyListQuery(query);
 }
@@ -116,7 +117,7 @@ export async function getPropertyById(propertyId) {
   );
 }
 
-export async function getPropertiesByOwnerUserId(userId, { city = "", status = "", search = "" } = {}) {
+export async function getPropertiesByOwnerUserId(userId, { city = "", status = "", search = "", limit = 0 } = {}) {
   const { data: owner, error: ownerError } = await supabaseClient
     .from("owners")
     .select("owner_id")
@@ -138,8 +139,9 @@ export async function getPropertiesByOwnerUserId(userId, { city = "", status = "
     .order("property_id", { ascending: false });
 
   if (city) query = query.ilike("city", `%${city}%`);
-  if (status) query = query.ilike("status", status);
+  if (status) query = query.eq("status", status);
   if (search) query = query.or(`title.ilike.%${search}%,city.ilike.%${search}%,property_type.ilike.%${search}%`);
+  if (limit) query = query.limit(limit);
 
   return runPropertyListQuery(query);
 }

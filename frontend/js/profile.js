@@ -1,5 +1,5 @@
 import supabaseClient from "./core/supabaseClient.js";
-import { getStoredAuthUser, getStoredUser, logout, requireUser, storeUserSession } from "./core/auth.js";
+import { getStoredAuthUser, logout, requireUser, storeUserSession } from "./core/auth.js";
 import { showToast } from "./utils/helpers.js";
 
 const profileForm = document.getElementById("profileForm");
@@ -12,6 +12,7 @@ const logoutBtn = document.getElementById("logoutBtn");
 let baseUser = null;
 let originalProfile = null;
 let editMode = false;
+let loadingProfile = false;
 
 function field(id) {
   return document.getElementById(id);
@@ -104,7 +105,7 @@ function renderProfile(profile) {
 }
 
 function syncEditState() {
-  const canEdit = baseUser?.role === "owner" || baseUser?.role === "tenant" || baseUser?.role === "admin";
+  const canEdit = baseUser?.role === "owner" || baseUser?.role === "tenant";
   const editableFields = new Set(getEditableFieldIds());
 
   profileCard?.classList.toggle("is-editing", editMode && canEdit);
@@ -124,7 +125,7 @@ function syncEditState() {
 }
 
 function setEditMode(enabled) {
-  editMode = Boolean(enabled && (baseUser?.role === "owner" || baseUser?.role === "tenant" || baseUser?.role === "admin"));
+  editMode = Boolean(enabled && (baseUser?.role === "owner" || baseUser?.role === "tenant"));
   syncEditState();
 }
 
@@ -146,102 +147,106 @@ function restoreInitialValues() {
   setEditMode(false);
 }
 
-function renderFromCachedUser() {
-  const cachedUser = getStoredUser();
-  if (!cachedUser) return;
-
-  baseUser = {
-    user_id: cachedUser.user_id,
-    name: cachedUser.name,
-    email: cachedUser.email,
-    role: cachedUser.role,
-    auth_user_id: cachedUser.auth_user_id || null
-  };
-
-  originalProfile = buildProfileState(cachedUser);
-  showRoleFields(cachedUser.role);
-  renderProfile(originalProfile);
-  setEditMode(false);
-}
-
 async function loadProfile() {
-  const user = await requireUser(["admin", "owner", "tenant"]);
-  if (!user) throw new Error("Unauthorised");
+  if (loadingProfile) return;
+  loadingProfile = true;
 
-  baseUser = {
-    user_id: user.user_id,
-    name: user.name,
-    email: user.email,
-    role: user.role,
-    auth_user_id: user.auth_user_id || null
-  };
+  try {
+    const user = await requireUser(["admin", "owner", "tenant"]);
+    if (!user) return;
 
-  originalProfile = buildProfileState(user);
-  showRoleFields(user.role);
-  renderProfile(originalProfile);
-  persistProfile(originalProfile);
-  setEditMode(false);
+    baseUser = {
+      user_id: user.user_id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      auth_user_id: user.auth_user_id || null
+    };
+
+    originalProfile = buildProfileState(user);
+    showRoleFields(user.role);
+    renderProfile(originalProfile);
+    persistProfile(originalProfile);
+    setEditMode(false);
+  } finally {
+    loadingProfile = false;
+  }
 }
 
 async function saveProfile() {
   if (!baseUser || !editMode) return;
 
-  const nextProfile = {
-    ...originalProfile,
-    phone: field("profilePhone")?.value.trim() || "",
-    city: field("profileCity")?.value.trim() || ""
-  };
-
-  let error = null;
-
-  if (baseUser.role === "owner") {
-    nextProfile.address = field("profileAddress")?.value.trim() || "";
-    nextProfile.owner_type = field("profileOwnerType")?.value.trim() || "";
-
-    ({ error } = await supabaseClient
-      .from("owners")
-      .upsert(
-        {
-          user_id: baseUser.user_id,
-          phone: nextProfile.phone,
-          city: nextProfile.city,
-          address: nextProfile.address,
-          owner_type: nextProfile.owner_type || null
-        },
-        { onConflict: "user_id" }
-      ));
+  if (saveProfileBtn) {
+    saveProfileBtn.disabled = true;
+    saveProfileBtn.textContent = "Saving...";
   }
 
-  if (baseUser.role === "tenant") {
-    nextProfile.aadhaar_no = field("profileAadhaar")?.value.trim() || "";
-    nextProfile.occupation = field("profileOccupation")?.value.trim() || "";
-    nextProfile.permanent_address = field("profilePermAddress")?.value.trim() || "";
+  try {
+    const nextProfile = {
+      ...originalProfile,
+      phone: field("profilePhone")?.value.trim() || "",
+      city: field("profileCity")?.value.trim() || ""
+    };
 
-    ({ error } = await supabaseClient
-      .from("tenants")
-      .upsert(
-        {
-          user_id: baseUser.user_id,
-          phone: nextProfile.phone,
-          city: nextProfile.city,
-          aadhaar_no: nextProfile.aadhaar_no,
-          occupation: nextProfile.occupation,
-          permanent_address: nextProfile.permanent_address
-        },
-        { onConflict: "user_id" }
-      ));
-  }
+    let error = null;
 
-  if (error) {
+    if (baseUser.role === "owner") {
+      nextProfile.address = field("profileAddress")?.value.trim() || "";
+      nextProfile.owner_type = field("profileOwnerType")?.value.trim() || "";
+
+      ({ error } = await supabaseClient
+        .from("owners")
+        .upsert(
+          {
+            user_id: baseUser.user_id,
+            phone: nextProfile.phone,
+            city: nextProfile.city,
+            address: nextProfile.address,
+            owner_type: nextProfile.owner_type || null
+          },
+          { onConflict: "user_id" }
+        ));
+    }
+
+    if (baseUser.role === "tenant") {
+      nextProfile.aadhaar_no = field("profileAadhaar")?.value.trim() || "";
+      nextProfile.occupation = field("profileOccupation")?.value.trim() || "";
+      nextProfile.permanent_address = field("profilePermAddress")?.value.trim() || "";
+
+      ({ error } = await supabaseClient
+        .from("tenants")
+        .upsert(
+          {
+            user_id: baseUser.user_id,
+            phone: nextProfile.phone,
+            city: nextProfile.city,
+            aadhaar_no: nextProfile.aadhaar_no,
+            occupation: nextProfile.occupation,
+            permanent_address: nextProfile.permanent_address
+          },
+          { onConflict: "user_id" }
+        ));
+    }
+
+    if (error) {
+      showToast(error.message || "Failed to save profile", "error");
+      return;
+    }
+
+    originalProfile = nextProfile;
+    renderProfile(originalProfile);
+    persistProfile(originalProfile);
+    setEditMode(false);
+    showToast("Profile updated successfully", "success");
+  } catch (error) {
+    console.error("Profile save failed:", error);
     showToast(error.message || "Failed to save profile", "error");
-    return;
+  } finally {
+    if (saveProfileBtn) {
+      saveProfileBtn.disabled = false;
+      saveProfileBtn.textContent = "Save Changes";
+    }
   }
-
-  originalProfile = nextProfile;
-  renderProfile(originalProfile);
-  persistProfile(originalProfile);
-  setEditMode(false);
-  showToast("Profile updated successfully", "success");
 }
 
 editProfileBtn?.addEventListener("click", () => setEditMode(true));
@@ -254,5 +259,10 @@ logoutBtn?.addEventListener("click", () => {
   void logout();
 });
 
-renderFromCachedUser();
-await loadProfile();
+try {
+  await loadProfile();
+} catch (error) {
+  console.error("Profile load failed:", error);
+  showToast(error.message || "Unable to load profile", "error");
+  setEditMode(false);
+}

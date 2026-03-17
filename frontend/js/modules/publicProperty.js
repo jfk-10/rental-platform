@@ -11,8 +11,7 @@ const params = new URLSearchParams(window.location.search);
 const propertyId = Number(params.get("id"));
 const source = params.get("source") || "discover";
 
-await syncStoredUserWithSession();
-const currentUser = getStoredUser();
+const currentUser = await syncStoredUserWithSession() || getStoredUser();
 
 async function getOwnerIdForCurrentUser() {
   if (!currentUser?.user_id || currentUser.role !== "owner") return null;
@@ -161,4 +160,9 @@ async function loadProperty() {
   `;
 }
 
-await loadProperty();
+try {
+  await loadProperty();
+} catch (error) {
+  console.error("Public property load failed:", error);
+  renderEmptyState("Unable to load property details.");
+}

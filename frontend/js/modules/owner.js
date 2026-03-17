@@ -1,4 +1,4 @@
-import { requireUser } from "../core/auth.js";
+import { getStoredAuthUser, requireUser, storeUserSession } from "../core/auth.js";
 import supabaseClient from "../core/supabaseClient.js";
 import { listProperties } from "../services/propertyService.js";
 import { listAgreements } from "../services/agreementService.js";
@@ -81,11 +81,14 @@ ownerForm?.addEventListener("submit", async (event) => {
     return;
   }
 
-  const stored = JSON.parse(localStorage.getItem("appUser") || "{}");
-  localStorage.setItem(
-    "appUser",
-    JSON.stringify({ ...stored, phone, city, address, owner_type: ownerType })
-  );
+  const authUser = getStoredAuthUser() || { id: user.auth_user_id || user.user_id, email: user.email };
+  storeUserSession(authUser, {
+    ...user,
+    phone,
+    city,
+    address,
+    owner_type: ownerType
+  });
 
   profileComplete = true;
   showToast("Profile saved", "success");

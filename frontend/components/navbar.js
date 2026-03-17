@@ -1,4 +1,4 @@
-import { getStoredUser, syncStoredUserWithSession, watchAuthState } from "../js/core/auth.js";
+import { syncStoredUserWithSession, watchAuthState } from "../js/core/auth.js";
 
 const navbarMarkupCache = new Map();
 let renderSequence = 0;
@@ -113,20 +113,12 @@ async function renderNavbar(user) {
 }
 
 async function loadNavbar() {
-  const storedUser = getStoredUser();
-  if (storedUser) {
-    await renderNavbar(storedUser);
-  }
-
-  const syncedUser = await syncStoredUserWithSession();
-  const resolvedUser = syncedUser || getStoredUser();
-  if (resolvedUser) {
-    await renderNavbar(resolvedUser);
-  }
+  const resolvedUser = await syncStoredUserWithSession();
+  await renderNavbar(resolvedUser || null);
 }
 
 watchAuthState((user) => {
-  void renderNavbar(user || getStoredUser());
+  void renderNavbar(user || null);
 });
 
 void loadNavbar();

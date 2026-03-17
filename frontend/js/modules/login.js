@@ -12,6 +12,21 @@ function getDashboardPath(role) {
   return null;
 }
 
+function buildLocalAuthPayload(appUser) {
+  return {
+    user: {
+      id: appUser.auth_user_id || `local-${appUser.user_id}`,
+      email: appUser.email
+    },
+    session: null
+  };
+}
+
+function hasMatchingAppPassword(appUser, password) {
+  const storedPassword = String(appUser?.password || "");
+  return Boolean(storedPassword) && storedPassword === password;
+}
+
 async function getAppUserByEmail(email) {
   const { data, error } = await supabaseClient
     .from("users")
@@ -209,12 +224,22 @@ async function resolveLoginFailureMessage(email, password, authError) {
     return { message: "Invalid email or password.", authData: null, appUser: null };
   }
 
+  if (hasMatchingAppPassword(appUser, password)) {
+    return {
+      message: "Login successful. Redirecting...",
+      authData: buildLocalAuthPayload(appUser),
+      appUser,
+      sessionMode: "local"
+    };
+  }
+
   const repaired = await tryRepairLegacyAccount(appUser, password);
   if (repaired.repaired && repaired.authData?.user) {
     return {
       message: "Recovered a legacy account configuration. Redirecting...",
       authData: repaired.authData,
-      appUser: repaired.appUser
+      appUser: repaired.appUser,
+      sessionMode: "supabase"
     };
   }
 
@@ -223,7 +248,8 @@ async function resolveLoginFailureMessage(email, password, authError) {
     return {
       message: "Linked the admin account to Supabase Auth. Redirecting...",
       authData: provisioned.authData,
-      appUser: provisioned.appUser
+      appUser: provisioned.appUser,
+      sessionMode: "supabase"
     };
   } else if (provisioned.signUpError) {
     return {
@@ -265,6 +291,7 @@ if (form) {
 
     let authData = null;
     let appUser = null;
+    let sessionMode = "supabase";
 
     try {
       const { data: initialAuthData, error: authError } = await supabaseClient.auth.signInWithPassword({ email, password });
@@ -278,6 +305,7 @@ if (form) {
 
         authData = resolution.authData;
         appUser = resolution.appUser;
+        sessionMode = resolution.sessionMode || "supabase";
         showToast(resolution.message, "success");
       } else {
         authData = initialAuthData;
@@ -294,8 +322,19 @@ if (form) {
         appUser = loadedAppUser;
       }
 
-      storeUserSession(authData.user, appUser);
-      await syncStoredUserWithSession();
+      if (sessionMode === "local") {
+        try {
+          await supabaseClient.auth.signOut({ scope: "local" });
+        } catch {
+          // Ignore local sign-out failures before local app-session fallback.
+        }
+      }
+
+      storeUserSession(authData.user, appUser, { mode: sessionMode });
+
+      if (sessionMode !== "local") {
+        await syncStoredUserWithSession();
+      }
 
       const nextPage = getDashboardPath(appUser.role);
       if (!nextPage) {

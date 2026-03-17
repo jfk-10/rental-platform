@@ -121,41 +121,55 @@ function openDetailsModal(property) {
 async function loadBrowseRentals() {
   if (!browseGrid) return;
 
-  const search = searchInput?.value.trim() || "";
-  const city = cityFilter?.value.trim() || "";
-  const status = statusFilter ? statusFilter.value : "Available";
-  const maxBudget = Number(budgetFilter?.value || 0);
-
-  const { data, error } = await listProperties({
-    search,
-    city,
-    status,
-    maxBudget
-  });
-
-  if (error) {
-    browseGrid.innerHTML = renderEmptyState("Unable to load rentals", "Please try again.");
-    if (browseSummary) browseSummary.textContent = "Rental listings could not be loaded.";
-    showToast(error.message || "Failed to load rentals", "error");
-    return;
+  if (browseSummary) browseSummary.textContent = "Loading rentals...";
+  browseGrid.innerHTML = renderEmptyState("Loading rentals", "Fetching the latest listings for you.");
+  if (searchBtn) {
+    searchBtn.disabled = true;
+    searchBtn.textContent = "Loading...";
   }
 
-  const listings = data || [];
-  propertyMap.clear();
-  listings.forEach((property) => {
-    propertyMap.set(property.property_id, property);
-  });
+  try {
+    const search = searchInput?.value.trim() || "";
+    const city = cityFilter?.value.trim() || "";
+    const status = statusFilter ? statusFilter.value : "Available";
+    const maxBudget = Number(budgetFilter?.value || 0);
 
-  if (browseSummary) {
-    const activeFilters = [search, city, status, maxBudget ? `up to Rs ${maxBudget}` : ""].filter(Boolean);
-    browseSummary.textContent = listings.length
-      ? `Showing ${listings.length} listing${listings.length === 1 ? "" : "s"}${activeFilters.length ? ` for ${activeFilters.join(", ")}` : ""}.`
-      : "No listings matched the current filters.";
+    const { data, error } = await listProperties({
+      search,
+      city,
+      status,
+      maxBudget
+    });
+
+    if (error) {
+      browseGrid.innerHTML = renderEmptyState("Unable to load rentals", "Please try again.");
+      if (browseSummary) browseSummary.textContent = "Rental listings could not be loaded.";
+      showToast(error.message || "Failed to load rentals", "error");
+      return;
+    }
+
+    const listings = data || [];
+    propertyMap.clear();
+    listings.forEach((property) => {
+      propertyMap.set(property.property_id, property);
+    });
+
+    if (browseSummary) {
+      const activeFilters = [search, city, status, maxBudget ? `up to Rs ${maxBudget}` : ""].filter(Boolean);
+      browseSummary.textContent = listings.length
+        ? `Showing ${listings.length} listing${listings.length === 1 ? "" : "s"}${activeFilters.length ? ` for ${activeFilters.join(", ")}` : ""}.`
+        : "No listings matched the current filters.";
+    }
+
+    browseGrid.innerHTML = listings.length
+      ? listings.map((property) => renderPropertyCard(property)).join("")
+      : renderEmptyState("No rentals found", "Try another city, widen your budget, or reset the filters.");
+  } finally {
+    if (searchBtn) {
+      searchBtn.disabled = false;
+      searchBtn.textContent = "Search Listings";
+    }
   }
-
-  browseGrid.innerHTML = listings.length
-    ? listings.map((property) => renderPropertyCard(property)).join("")
-    : renderEmptyState("No rentals found", "Try another city, widen your budget, or reset the filters.");
 }
 
 searchBtn?.addEventListener("click", () => {
@@ -187,7 +201,7 @@ browseGrid?.addEventListener("click", (event) => {
     return;
   }
 
-  window.location.href = `../pages/tenant-property.html?id=${propertyId}`;
+  openDetailsModal(property);
 });
 
 closeDetailsBtn?.addEventListener("click", closeDetailsModal);
@@ -196,6 +210,12 @@ detailsModal?.addEventListener("click", (event) => {
   const target = event.target;
   if (!(target instanceof HTMLElement)) return;
   if (target.dataset.closeTenantModal === "true") {
+    closeDetailsModal();
+  }
+});
+
+window.addEventListener("keydown", (event) => {
+  if (event.key === "Escape" && detailsModal && !detailsModal.hidden) {
     closeDetailsModal();
   }
 });
