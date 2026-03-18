@@ -6,12 +6,35 @@ const newHomesGrid = document.getElementById("newHomesGrid");
 const popularLocations = document.getElementById("popularLocations");
 const homeSearch = document.getElementById("homeSearch");
 const searchResultsEl = document.getElementById("homeSearchResults");
+const heroSearchForm = document.getElementById("heroSearchForm");
 
 const FALLBACK_IMG = "https://images.unsplash.com/photo-1560185127-6ed189bf02f4?auto=format&fit=crop&w=900&q=80";
 const basePrefix = window.location.pathname.includes("/pages/") ? "../" : "./";
+const isDiscoverPage = window.location.pathname.endsWith("/pages/discover.html");
 let availablePropertyCache = null;
 let availablePropertyPromise = null;
 let locationChipsBound = false;
+
+if (!isDiscoverPage && heroSearchForm) {
+  heroSearchForm.remove();
+}
+
+if (!isDiscoverPage) {
+  [
+    document.getElementById("homeSearch"),
+    document.getElementById("homeCity"),
+    document.getElementById("homeStatus"),
+    document.getElementById("homeBudget")
+  ].filter(Boolean).forEach((element) => {
+    const wrapper = element.closest(".toolbar-item, .field, .form-field, .filter-field, .search-bar, .toolbar")
+      || element.parentElement;
+    if (wrapper && !wrapper.contains(recommendedGrid) && !wrapper.contains(newHomesGrid)) {
+      wrapper.remove();
+    } else {
+      element.remove();
+    }
+  });
+}
 
 function renderPropertyCard(property) {
   const image = property.property_images?.[0]?.image_url || FALLBACK_IMG;

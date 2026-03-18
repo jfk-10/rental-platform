@@ -14,10 +14,8 @@
 
   <main class="dashboard-layout dashboard-layout--full">
     <section class="dashboard-shell">
-
-      <!-- ── Complete Profile Banner ── -->
       <section id="tenantProfilePrompt" class="complete-profile-banner" hidden>
-        <div class="cpb-icon">👤</div>
+        <div class="cpb-icon">P</div>
         <div class="cpb-body">
           <h3 class="cpb-title">Complete your profile</h3>
           <p class="cpb-desc">Add your phone number and city to browse and rent properties.</p>
@@ -27,14 +25,13 @@
         </button>
       </section>
 
-      <!-- ── Complete Profile Form ── -->
       <section id="completeProfileForm" class="page-card" hidden>
         <div class="cpf-head">
           <div>
             <h3 class="section-title">Complete your profile</h3>
             <p class="section-subtitle">One-time setup. Fill in all details to access rentals.</p>
           </div>
-          <button class="btn btn-ghost cpf-close" type="button" id="closeCompleteProfileBtn">✕</button>
+          <button class="btn btn-ghost cpf-close" type="button" id="closeCompleteProfileBtn">Close</button>
         </div>
         <form id="tenantCompleteForm" class="form-grid" style="margin-top:1rem">
           <div>
@@ -64,18 +61,38 @@
         </form>
       </section>
 
-      <!-- ── KPI Stats ── -->
       <section class="page-card">
         <h1 class="section-title">Tenant Dashboard</h1>
         <div class="kpi-grid">
           <article class="kpi-card metric-card"><p class="kpi-label">Active Rental</p><p class="kpi-value" id="tenantActiveRental">0</p></article>
-          <article class="kpi-card metric-card"><p class="kpi-label">Upcoming Payment</p><p class="kpi-value" id="tenantUpcomingPayment">₹0</p></article>
+          <article class="kpi-card metric-card"><p class="kpi-label">Upcoming Payment</p><p class="kpi-value" id="tenantUpcomingPayment">Rs 0</p></article>
           <article class="kpi-card metric-card"><p class="kpi-label">Maintenance Requests</p><p class="kpi-value" id="tenantMaintenanceRequests">0</p></article>
           <article class="kpi-card metric-card"><p class="kpi-label">Agreement Status</p><p class="kpi-value" id="tenantAgreementStatus">No Active Agreement</p></article>
-          <article class="kpi-card metric-card"><p class="kpi-label">Recent Notifications</p><p class="kpi-value" id="tenantRecentNotifications">0</p></article>
+          <article class="kpi-card metric-card"><p class="kpi-label">Interest Requests</p><p class="kpi-value" id="tenantRecentNotifications">0</p></article>
         </div>
       </section>
 
+      <section class="page-card content-stack">
+        <div class="panel-header">
+          <div>
+            <h2 class="section-title">My Property Interests</h2>
+            <p class="section-subtitle">Track the listings you have requested and see whether an agreement is being prepared.</p>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Property</th>
+                <th>Owner</th>
+                <th>Status</th>
+                <th>Requested On</th>
+              </tr>
+            </thead>
+            <tbody id="tenantApplicationsTable"></tbody>
+          </table>
+        </div>
+      </section>
     </section>
   </main>
 

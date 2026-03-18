@@ -1,7 +1,13 @@
 import { requireUser } from "../core/auth.js";
-import { getTenants } from "../services/userService.js";
-import { listProperties } from "../services/propertyService.js";
-import { createAgreement, listAgreements, updateAgreementStatus, updateAgreement, deleteAgreement } from "../services/agreementService.js";
+import { listApplications, updateApplicationStatusByMatch } from "../services/applicationService.js";
+import {
+  createAgreement,
+  deleteAgreement,
+  listAgreements,
+  syncPropertyAvailability,
+  updateAgreement,
+  updateAgreementStatus
+} from "../services/agreementService.js";
 import { formatCurrency, formatDate, showToast } from "../utils/helpers.js";
 
 const AGREEMENT_STATUS = {
@@ -13,6 +19,7 @@ const AGREEMENT_STATUS = {
 };
 
 const EDIT_REQUEST_KEY = "agreementEditRequests";
+const PROPERTY_ACTIVITY_KEY = "propertiesUpdatedAt";
 
 const user = await requireUser(["admin", "owner", "tenant"]);
 if (!user) throw new Error("Unauthorised");
@@ -22,7 +29,10 @@ const propertySelect = document.getElementById("propertyId");
 const tenantSelect = document.getElementById("tenantId");
 const agreementTableBody = document.getElementById("agreementTableBody");
 const agreementStatusInput = document.getElementById("agreementStatus");
+const monthlyRentInput = document.getElementById("monthlyRent");
 const createAgreementButton = adminForm?.querySelector("button[type='submit']");
+const propertyOptionMap = new Map();
+const selectedApplicationsByProperty = new Map();
 
 function canCreateAgreement() {
   return user.role === "admin";
@@ -101,6 +111,11 @@ function getAgreementDisplayStatus(agreement) {
   return getAgreementStatusLabel(getEffectiveAgreementStatus(agreement));
 }
 
+function broadcastPropertySync() {
+  localStorage.setItem(PROPERTY_ACTIVITY_KEY, String(Date.now()));
+  window.dispatchEvent(new CustomEvent("properties:changed"));
+}
+
 function isAgreementOwner(agreement) {
   return agreement.properties?.owners?.user_id === user.user_id;
 }
@@ -156,6 +171,13 @@ async function syncCompletedAgreements(agreements) {
     }));
   }
 
+  const syncResults = await Promise.all(
+    endedActiveAgreements.map((agreement) => syncPropertyAvailability(agreement.property_id))
+  );
+  if (syncResults.some((result) => !result?.error)) {
+    broadcastPropertySync();
+  }
+
   const completedIds = new Set(endedActiveAgreements.map((agreement) => agreement.agreement_id));
   return agreements.map((agreement) => (
     completedIds.has(agreement.agreement_id)
@@ -176,26 +198,66 @@ if (agreementStatusInput) {
 async function loadSelectOptions() {
   if (!canCreateAgreement()) return;
 
-  const [{ data: properties, error: propertyError }, tenantsResult] = await Promise.all([
-    listProperties({ status: "Available" }),
-    getTenants()
-  ]);
-  const tenantError = tenantsResult?.error;
-  const tenants = tenantsResult?.data || [];
+  const applicationsResult = await listApplications({ statuses: ["Selected"] });
+  const selectedApplications = applicationsResult?.data || [];
 
-  if (propertyError || tenantError) {
-    console.error(propertyError || tenantError);
-    showToast("Failed to load agreement options", "error");
+  if (applicationsResult?.error) {
+    console.error(applicationsResult.error);
+    showToast("Failed to load selected tenant applications", "error");
     return;
   }
 
-  propertySelect.innerHTML = `<option value="">Select Property</option>${(properties || [])
+  propertyOptionMap.clear();
+  selectedApplicationsByProperty.clear();
+
+  selectedApplications.forEach((application) => {
+    const property = application.properties;
+    if (!property?.property_id) return;
+    propertyOptionMap.set(Number(property.property_id), property);
+    const existing = selectedApplicationsByProperty.get(Number(property.property_id)) || [];
+    existing.push(application);
+    selectedApplicationsByProperty.set(Number(property.property_id), existing);
+  });
+
+  const selectedProperties = [...propertyOptionMap.values()];
+
+  propertySelect.innerHTML = `<option value="">Select Property</option>${selectedProperties
     .map((property) => `<option value="${property.property_id}">#${property.property_id} - ${property.title || property.address}, ${property.city}</option>`)
     .join("")}`;
 
-  tenantSelect.innerHTML = `<option value="">Select Tenant</option>${(tenants || [])
-    .map((tenant) => `<option value="${tenant.tenant_id}">#${tenant.tenant_id} - ${tenant.name || tenant.users?.name || "-"}</option>`)
-    .join("")}`;
+  tenantSelect.innerHTML = "<option value=''>Select Property First</option>";
+
+  if (monthlyRentInput) {
+    monthlyRentInput.value = "";
+  }
+}
+
+function updateRentFromSelectedProperty() {
+  if (!monthlyRentInput) return;
+  const propertyId = Number(propertySelect?.value || 0);
+  const property = propertyOptionMap.get(propertyId);
+  monthlyRentInput.value = property?.rent_amount ? String(property.rent_amount) : "";
+
+  const applications = selectedApplicationsByProperty.get(propertyId) || [];
+  tenantSelect.innerHTML = applications.length
+    ? applications
+      .map((application) => `<option value="${application.tenant_id}">#${application.tenant_id} - ${application.tenants?.users?.name || "-"}</option>`)
+      .join("")
+    : "<option value=''>No selected tenant</option>";
+}
+
+function promptOwnerDeposit(existingValue = 0) {
+  const initialValue = Number(existingValue || 0) > 0 ? String(existingValue) : "";
+  const value = prompt("Enter security deposit amount for this agreement:", initialValue);
+  if (value === null) return null;
+
+  const deposit = Number(value);
+  if (!Number.isFinite(deposit) || deposit <= 0) {
+    showToast("Enter a valid security deposit amount.", "error");
+    return undefined;
+  }
+
+  return deposit;
 }
 
 function filterByRole(agreements) {
@@ -334,11 +396,21 @@ async function approveAgreement(agreementId) {
   const agreementStatus = normalizeStatus(agreement.agreement_status);
 
   if (user.role === "owner" && isAgreementOwner(agreement) && isPendingOwnerStatus(agreement.agreement_status)) {
-    const { error: updateError } = await updateAgreementStatus(agreementId, AGREEMENT_STATUS.pendingTenant);
+    const depositAmount = promptOwnerDeposit(agreement.deposit_amount);
+    if (depositAmount === null) return;
+    if (depositAmount === undefined) return;
+
+    const { error: updateError } = await updateAgreement(agreementId, {
+      deposit_amount: depositAmount,
+      agreement_status: AGREEMENT_STATUS.pendingTenant
+    });
     if (updateError) {
       showToast("Failed to record owner approval", "error");
       return;
     }
+
+    const syncResult = await syncPropertyAvailability(agreement.property_id);
+    if (!syncResult?.error) broadcastPropertySync();
 
     showToast("Owner approved. Waiting for tenant approval.", "success");
     await loadAgreementList();
@@ -351,6 +423,9 @@ async function approveAgreement(agreementId) {
       showToast("Failed to record tenant approval", "error");
       return;
     }
+
+    const syncResult = await syncPropertyAvailability(agreement.property_id);
+    if (!syncResult?.error) broadcastPropertySync();
 
     showToast("Tenant approved. Agreement is now active.", "success");
     await loadAgreementList();
@@ -387,6 +462,15 @@ async function rejectAgreement(agreementId) {
     return;
   }
 
+  await updateApplicationStatusByMatch({
+    propertyId: agreement.property_id,
+    tenantId: agreement.tenant_id,
+    status: "Rejected"
+  });
+
+  const syncResult = await syncPropertyAvailability(agreement.property_id);
+  if (!syncResult?.error) broadcastPropertySync();
+
   showToast("Agreement rejected.", "success");
   await loadAgreementList();
 }
@@ -419,7 +503,17 @@ async function handleDeleteAgreement(agreementId) {
     return;
   }
 
+  await updateApplicationStatusByMatch({
+    propertyId: agreement.property_id,
+    tenantId: agreement.tenant_id,
+    status: "Selected"
+  });
+
+  const syncResult = await syncPropertyAvailability(agreement.property_id);
+  if (!syncResult?.error) broadcastPropertySync();
+
   showToast("Agreement deleted successfully.", "success");
+  await loadSelectOptions();
   await loadAgreementList();
 }
 
@@ -445,8 +539,8 @@ adminForm?.addEventListener("submit", async (event) => {
     tenant_id: Number(tenantSelect.value),
     start_date: document.getElementById("startDate").value,
     end_date: document.getElementById("endDate").value,
-    deposit_amount: Number(document.getElementById("depositAmount").value || 0),
-    monthly_rent: Number(document.getElementById("monthlyRent").value || 0),
+    deposit_amount: 0,
+    monthly_rent: Number(monthlyRentInput?.value || 0),
     police_verified: document.getElementById("policeVerified").checked,
     agreement_status: AGREEMENT_STATUS.pendingOwner
   };
@@ -458,6 +552,11 @@ adminForm?.addEventListener("submit", async (event) => {
 
   if (payload.end_date < payload.start_date) {
     showToast("End date must be on or after the start date.", "error");
+    return;
+  }
+
+  if (!payload.monthly_rent) {
+    showToast("Select a property with a valid rent amount first.", "error");
     return;
   }
 
@@ -474,9 +573,20 @@ adminForm?.addEventListener("submit", async (event) => {
       return;
     }
 
+    await updateApplicationStatusByMatch({
+      propertyId: payload.property_id,
+      tenantId: payload.tenant_id,
+      status: "Agreement Sent"
+    });
+
+    const syncResult = await syncPropertyAvailability(payload.property_id);
+    if (!syncResult?.error) broadcastPropertySync();
+
     showToast("Agreement created. Waiting for owner approval.", "success");
     adminForm.reset();
     if (agreementStatusInput) agreementStatusInput.value = getAgreementStatusLabel(AGREEMENT_STATUS.pendingOwner);
+    if (monthlyRentInput) monthlyRentInput.value = "";
+    await loadSelectOptions();
     await loadAgreementList();
   } finally {
     if (createAgreementButton) {
@@ -485,6 +595,8 @@ adminForm?.addEventListener("submit", async (event) => {
     }
   }
 });
+
+propertySelect?.addEventListener("change", updateRentFromSelectedProperty);
 
 await loadSelectOptions();
 await loadAgreementList();

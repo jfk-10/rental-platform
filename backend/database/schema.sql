@@ -50,7 +50,7 @@ create table if not exists properties (
   shop_units integer,
   rent_amount numeric(12,2) not null check (rent_amount >= 0),
   allowed_usage text,
-  status text not null default 'Available' check (status in ('Available', 'Rented', 'Inactive')),
+  status text not null default 'Available' check (status in ('Available', 'Reserved', 'Rented', 'Inactive')),
   created_at timestamptz not null default now()
 );
 
@@ -59,6 +59,26 @@ create table if not exists property_images (
   property_id bigint not null references properties(property_id) on delete cascade,
   image_url text not null,
   created_at timestamptz not null default now()
+);
+
+create table if not exists property_applications (
+  application_id bigint generated always as identity primary key,
+  property_id bigint not null references properties(property_id) on delete cascade,
+  tenant_id bigint not null references tenants(tenant_id) on delete cascade,
+  status text not null default 'Interested' check (
+    status in (
+      'Interested',
+      'Shortlisted',
+      'Selected',
+      'Agreement Sent',
+      'Rejected',
+      'Withdrawn'
+    )
+  ),
+  message text,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  constraint property_applications_unique_interest unique (property_id, tenant_id)
 );
 
 create table if not exists rental_agreements (
@@ -107,6 +127,9 @@ create table if not exists maintenance_requests (
 );
 
 create index if not exists idx_properties_city_status on properties(city, status);
+create index if not exists idx_property_applications_property on property_applications(property_id);
+create index if not exists idx_property_applications_tenant on property_applications(tenant_id);
+create index if not exists idx_property_applications_status on property_applications(status);
 create index if not exists idx_agreements_tenant on rental_agreements(tenant_id);
 create index if not exists idx_agreements_property on rental_agreements(property_id);
 create index if not exists idx_payments_agreement on rent_payments(agreement_id);

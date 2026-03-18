@@ -1,4 +1,5 @@
 import { requireUser } from "../core/auth.js";
+import { listApplications } from "../services/applicationService.js";
 import { getOwners, getTenants } from "../services/userService.js";
 import { listProperties } from "../services/propertyService.js";
 import { listAgreements } from "../services/agreementService.js";
@@ -12,6 +13,7 @@ const activeAgreementsEl = document.getElementById("adminActiveAgreements");
 const pendingApprovalsEl = document.getElementById("adminPendingApprovals");
 const ownersTableEl = document.getElementById("adminOwnersTable");
 const tenantsTableEl = document.getElementById("adminTenantsTable");
+const applicationsTableEl = document.getElementById("adminApplicationsTable");
 
 const ACTIVE_STATUS = "ACTIVE";
 const PENDING_STATUSES = new Set(["PENDING OWNER", "PENDING OWNER APPROVAL", "PENDING TENANT", "PENDING TENANT APPROVAL"]);
@@ -155,6 +157,24 @@ function renderTenantsTable(tenants, tenantAgreementStats) {
     : renderEmptyRows("Tenants will appear here after they complete onboarding.", 7);
 }
 
+function renderApplicationsTable(applications) {
+  if (!applicationsTableEl) return;
+
+  applicationsTableEl.innerHTML = applications.length
+    ? applications
+      .map((application) => `
+        <tr>
+          <td>${escapeHtml(application.properties?.title || application.properties?.address || "-")}</td>
+          <td>${escapeHtml(application.properties?.owners?.users?.name || "-")}</td>
+          <td>${escapeHtml(application.tenants?.users?.name || "-")}</td>
+          <td>${escapeHtml(application.status || "-")}</td>
+          <td>${escapeHtml(String(application.created_at || "").slice(0, 10) || "-")}</td>
+        </tr>
+      `)
+      .join("")
+    : renderEmptyRows("Tenant interest requests will appear here after applicants start browsing properties.", 5);
+}
+
 async function loadAdminDashboard() {
   const user = await requireUser(["admin"]);
   if (!user) return;
@@ -162,17 +182,19 @@ async function loadAdminDashboard() {
   setDashboardStatus("Loading owner, tenant, property, and agreement summaries...");
 
   try {
-    const [ownersResult, tenantsResult, propertiesResult, agreementsResult] = await Promise.all([
+    const [ownersResult, tenantsResult, propertiesResult, agreementsResult, applicationsResult] = await Promise.all([
       getOwners(),
       getTenants(),
       listProperties(),
-      listAgreements()
+      listAgreements(),
+      listApplications()
     ]);
 
     const owners = extractData(ownersResult);
     const tenants = extractData(tenantsResult);
     const properties = extractData(propertiesResult);
     const agreements = extractData(agreementsResult);
+    const applications = extractData(applicationsResult);
 
     const propertyCounts = buildPropertyCounts(properties);
     const { ownerStats, tenantStats } = buildAgreementStats(agreements);
@@ -185,12 +207,14 @@ async function loadAdminDashboard() {
 
     renderOwnersTable(owners, propertyCounts, ownerStats);
     renderTenantsTable(tenants, tenantStats);
+    renderApplicationsTable(applications);
 
     const errors = [
       ownersResult?.error,
       tenantsResult?.error,
       propertiesResult?.error,
-      agreementsResult?.error
+      agreementsResult?.error,
+      applicationsResult?.error
     ].filter(Boolean);
 
     if (errors.length) {

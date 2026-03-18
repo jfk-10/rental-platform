@@ -36,12 +36,9 @@
         <input id="endDate" type="date" required />
       </div>
       <div>
-        <label for="depositAmount">Deposit</label>
-        <input id="depositAmount" type="text" inputmode="numeric" required />
-      </div>
-      <div>
         <label for="monthlyRent">Monthly Rent</label>
-        <input id="monthlyRent" type="text" inputmode="numeric" required />
+        <input id="monthlyRent" type="text" inputmode="numeric" readonly />
+        <p class="helper-text">This is pulled from the selected property listing.</p>
       </div>
       <div>
         <div class="checkbox-inline"><input id="policeVerified" type="checkbox" /><label for="policeVerified">Police Verified</label></div>
@@ -49,7 +46,7 @@
       <div>
         <label for="agreementStatus">Status</label>
         <input id="agreementStatus" type="text" value="Pending Owner Approval" readonly />
-        <p class="helper-text">Agreements move to owner approval, then tenant approval, and become active only after both approvals.</p>
+        <p class="helper-text">Admin creates the request, owner sets the deposit during approval, and the agreement becomes active only after owner and tenant approve.</p>
       </div>
       <div class="full">
         <button class="btn btn-primary" type="submit">Create Agreement</button>

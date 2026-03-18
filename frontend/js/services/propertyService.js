@@ -8,7 +8,8 @@ const PROPERTY_SELECT_QUERY = `
   *,
   owners!properties_owner_id_fkey(user_id,users!owners_user_id_fkey(name,email)),
   property_images(image_id,image_url),
-  rental_agreements(agreement_id,agreement_status,start_date,end_date)
+  rental_agreements(agreement_id,agreement_status,start_date,end_date),
+  property_applications(application_id,status)
 `;
 
 export const PROPERTY_IMAGE_PLACEHOLDER = "https://images.unsplash.com/photo-1560184897-ae75f418493e";
@@ -87,10 +88,19 @@ function hasLiveActiveAgreement(agreements = []) {
   });
 }
 
+function hasReservedApplication(applications = []) {
+  if (!Array.isArray(applications) || !applications.length) return false;
+  return applications.some((application) => {
+    const status = normalizeStatus(application?.status);
+    return status === "SELECTED" || status === "AGREEMENT SENT";
+  });
+}
+
 function derivePropertyStatus(property) {
   const baseStatus = normalizeStatus(property?.status);
   if (baseStatus === "INACTIVE") return "Inactive";
   if (hasLiveActiveAgreement(property?.rental_agreements)) return "Rented";
+  if (hasReservedApplication(property?.property_applications)) return "Reserved";
   return "Available";
 }
 
@@ -110,8 +120,57 @@ function normalizePropertyRecord(property) {
       }
       : owner,
     property_images: normalizeImageRows(property.property_images),
-    rental_agreements: Array.isArray(property.rental_agreements) ? property.rental_agreements : []
+    rental_agreements: Array.isArray(property.rental_agreements) ? property.rental_agreements : [],
+    property_applications: Array.isArray(property.property_applications) ? property.property_applications : []
   };
+}
+
+async function augmentPropertyPipelineData(records = []) {
+  const propertyIds = records
+    .map((record) => Number(record?.property_id))
+    .filter((propertyId) => Number.isFinite(propertyId) && propertyId > 0);
+
+  if (!propertyIds.length) {
+    return records;
+  }
+
+  const [{ data: agreements, error: agreementsError }, { data: applications, error: applicationsError }] = await Promise.all([
+    supabaseClient
+      .from("rental_agreements")
+      .select("agreement_id,property_id,agreement_status,start_date,end_date")
+      .in("property_id", propertyIds),
+    supabaseClient
+      .from("property_applications")
+      .select("application_id,property_id,status")
+      .in("property_id", propertyIds)
+  ]);
+
+  if (agreementsError || applicationsError) {
+    return records;
+  }
+
+  const agreementsByPropertyId = new Map();
+  const applicationsByPropertyId = new Map();
+
+  (agreements || []).forEach((agreement) => {
+    const propertyId = Number(agreement.property_id);
+    const existing = agreementsByPropertyId.get(propertyId) || [];
+    existing.push(agreement);
+    agreementsByPropertyId.set(propertyId, existing);
+  });
+
+  (applications || []).forEach((application) => {
+    const propertyId = Number(application.property_id);
+    const existing = applicationsByPropertyId.get(propertyId) || [];
+    existing.push(application);
+    applicationsByPropertyId.set(propertyId, existing);
+  });
+
+  return records.map((record) => ({
+    ...record,
+    rental_agreements: agreementsByPropertyId.get(Number(record.property_id)) || (Array.isArray(record.rental_agreements) ? record.rental_agreements : []),
+    property_applications: applicationsByPropertyId.get(Number(record.property_id)) || (Array.isArray(record.property_applications) ? record.property_applications : [])
+  }));
 }
 
 function filterPropertiesByStatus(properties = [], status = "") {
@@ -124,7 +183,8 @@ async function runPropertyListQuery(query, { status = "", limit = 0 } = {}) {
   const { data, error } = await query;
   if (error) return { data: null, error };
 
-  let properties = (data || []).map((property) => normalizePropertyRecord(property));
+  const enrichedData = await augmentPropertyPipelineData(data || []);
+  let properties = enrichedData.map((property) => normalizePropertyRecord(property));
   properties = filterPropertiesByStatus(properties, status);
 
   if (limit) {
@@ -141,8 +201,10 @@ async function runSinglePropertyQuery(query) {
   const { data, error } = await query;
   if (error) return { data: null, error };
 
+  const [enrichedProperty] = await augmentPropertyPipelineData(data ? [data] : []);
+
   return {
-    data: data ? normalizePropertyRecord(data) : null,
+    data: enrichedProperty ? normalizePropertyRecord(enrichedProperty) : null,
     error: null
   };
 }

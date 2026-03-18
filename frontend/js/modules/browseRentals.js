@@ -1,4 +1,5 @@
 import { requireUser } from "../core/auth.js";
+import { createApplication, listApplications } from "../services/applicationService.js";
 import { PROPERTY_IMAGE_PLACEHOLDER, listProperties } from "../services/propertyService.js";
 import { formatCurrency, showToast } from "../utils/helpers.js";
 
@@ -16,7 +17,30 @@ const detailsModal = document.getElementById("tenantPropertyDetailsModal");
 const detailsBody = document.getElementById("tenantPropertyDetailsBody");
 const closeDetailsBtn = document.getElementById("closeTenantPropertyModal");
 
+function removeLegacyBrowseFilters() {
+  const controls = [searchInput, cityFilter, statusFilter, budgetFilter, searchBtn].filter(Boolean);
+  const containers = new Set();
+
+  controls.forEach((control) => {
+    const wrapper = control.closest(".toolbar-item, .field, .form-field, .filter-field, .search-bar, .toolbar")
+      || control.parentElement;
+    if (wrapper) {
+      containers.add(wrapper);
+    } else {
+      control.remove();
+    }
+  });
+
+  containers.forEach((container) => {
+    if (!container || container.id === "browseRentalsGrid" || container.contains(browseGrid)) return;
+    container.remove();
+  });
+}
+
+removeLegacyBrowseFilters();
+
 const propertyMap = new Map();
+const applicationMap = new Map();
 
 function renderEmptyState(title, message) {
   return `
@@ -49,6 +73,11 @@ function renderPropertyCard(property) {
   const contactAction = ownerEmail
     ? `<a class="btn btn-secondary" href="mailto:${ownerEmail}">Contact Owner</a>`
     : "";
+  const application = applicationMap.get(property.property_id);
+  const interestLabel = application?.status || "";
+  const interestAction = application
+    ? `<button class="btn btn-ghost" type="button" disabled>${interestLabel}</button>`
+    : `<button class="btn btn-primary interestBtn" type="button" data-id="${property.property_id}">I'm Interested</button>`;
 
   return `
     <article class="property-card card property-card--tenant">
@@ -63,9 +92,11 @@ function renderPropertyCard(property) {
         <p class="property-rent"><strong>${formatCurrency(property.rent_amount)}</strong> <span>/ month</span></p>
         <p class="property-meta"><strong>Status:</strong> ${property.status || "Unknown"}</p>
         <p class="property-meta"><strong>Listed by:</strong> ${ownerName}</p>
+        ${application ? `<p class="property-meta"><strong>Your interest:</strong> ${interestLabel}</p>` : ""}
         <div class="actions-row compact-actions">
           <button class="btn btn-primary viewDetailsBtn" type="button" data-id="${property.property_id}">View Details</button>
           ${contactAction}
+          ${interestAction}
         </div>
       </div>
     </article>
@@ -128,23 +159,18 @@ async function loadBrowseRentals() {
 
   if (browseSummary) browseSummary.textContent = "Loading rentals...";
   browseGrid.innerHTML = renderEmptyState("Loading rentals", "Fetching the latest listings for you.");
-  if (searchBtn) {
-    searchBtn.disabled = true;
-    searchBtn.textContent = "Loading...";
-  }
-
   try {
-    const search = searchInput?.value.trim() || "";
-    const city = cityFilter?.value.trim() || "";
-    const status = statusFilter ? statusFilter.value : "Available";
-    const maxBudget = Number(budgetFilter?.value || 0);
+    const [{ data, error }, applicationsResult] = await Promise.all([
+      listProperties({ status: "Available" }),
+      listApplications({ tenantUserId: user.user_id })
+    ]);
 
-    const { data, error } = await listProperties({
-      search,
-      city,
-      status,
-      maxBudget
-    });
+    const applicationError = applicationsResult?.error;
+    const applications = applicationsResult?.data || [];
+
+    if (applicationError) {
+      showToast(applicationError.message || "Failed to load tenant interests", "error");
+    }
 
     if (error) {
       browseGrid.innerHTML = renderEmptyState("Unable to load rentals", "Please try again.");
@@ -152,6 +178,11 @@ async function loadBrowseRentals() {
       showToast(error.message || "Failed to load rentals", "error");
       return;
     }
+
+    applicationMap.clear();
+    applications.forEach((application) => {
+      applicationMap.set(application.property_id, application);
+    });
 
     const listings = data || [];
     propertyMap.clear();
@@ -169,43 +200,63 @@ async function loadBrowseRentals() {
       ? listings.map((property) => renderPropertyCard(property)).join("")
       : renderEmptyState("No rentals found", "Check back soon for new owner listings.");
   } finally {
-    if (searchBtn) {
-      searchBtn.disabled = false;
-      searchBtn.textContent = "Search Listings";
-    }
+    // no-op: browse rentals stays as a simple listing workspace without local filters
   }
 }
 
-searchBtn?.addEventListener("click", () => {
-  void loadBrowseRentals();
-});
-
-[searchInput, cityFilter, budgetFilter].forEach((field) => {
-  field?.addEventListener("keydown", (event) => {
-    if (event.key !== "Enter") return;
-    event.preventDefault();
-    void loadBrowseRentals();
-  });
-});
-
-statusFilter?.addEventListener("change", () => {
-  void loadBrowseRentals();
-});
-
-browseGrid?.addEventListener("click", (event) => {
-  const trigger = event.target.closest(".viewDetailsBtn");
-  if (!(trigger instanceof HTMLButtonElement)) return;
-
-  const propertyId = Number(trigger.dataset.id);
-  if (!propertyId) return;
-
+async function expressInterest(propertyId, button) {
   const property = propertyMap.get(propertyId);
   if (!property) {
-    showToast("Unable to load property details", "error");
+    showToast("Unable to find this listing.", "error");
     return;
   }
 
-  openDetailsModal(property);
+  if (button) {
+    button.disabled = true;
+    button.textContent = "Sending...";
+  }
+
+  const { error } = await createApplication({
+    property_id: propertyId,
+    tenantUserId: user.user_id
+  });
+
+  if (error) {
+    const duplicateInterest = /duplicate key|unique/i.test(String(error.message || ""));
+    showToast(duplicateInterest ? "You have already shown interest in this property." : (error.message || "Failed to record interest"), "error");
+    if (button) {
+      button.disabled = false;
+      button.textContent = "I'm Interested";
+    }
+    return;
+  }
+
+  showToast("Interest sent to the owner and admin.", "success");
+  await loadBrowseRentals();
+}
+
+browseGrid?.addEventListener("click", (event) => {
+  const trigger = event.target.closest(".viewDetailsBtn");
+  if (trigger instanceof HTMLButtonElement) {
+    const propertyId = Number(trigger.dataset.id);
+    if (!propertyId) return;
+
+    const property = propertyMap.get(propertyId);
+    if (!property) {
+      showToast("Unable to load property details", "error");
+      return;
+    }
+
+    openDetailsModal(property);
+    return;
+  }
+
+  const interestButton = event.target.closest(".interestBtn");
+  if (interestButton instanceof HTMLButtonElement) {
+    const propertyId = Number(interestButton.dataset.id);
+    if (!propertyId) return;
+    void expressInterest(propertyId, interestButton);
+  }
 });
 
 closeDetailsBtn?.addEventListener("click", closeDetailsModal);

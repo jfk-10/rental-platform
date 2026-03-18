@@ -89,6 +89,29 @@
         <div id="propertyCards" class="properties-grid"></div>
       </section>
 
+      <section class="page-card content-stack">
+        <div class="panel-header">
+          <div>
+            <h2 class="section-title">Tenant Interest Requests</h2>
+            <p class="section-subtitle">Review interested tenants, shortlist them, and select one candidate before admin prepares the agreement.</p>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Property</th>
+                <th>Tenant</th>
+                <th>Status</th>
+                <th>Requested On</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody id="ownerApplicationsTable"></tbody>
+          </table>
+        </div>
+      </section>
+
       <section id="ownerPropertyDetailsModal" class="workspace-modal" hidden>
         <div class="workspace-modal__backdrop" data-close-owner-modal="true"></div>
         <div class="workspace-modal__panel page-card">
@@ -140,6 +163,7 @@
               <label for="editPropertyStatus">Status</label>
               <select id="editPropertyStatus" required>
                 <option value="Available">Available</option>
+                <option value="Reserved">Reserved</option>
                 <option value="Rented">Rented</option>
                 <option value="Inactive">Inactive</option>
               </select>

@@ -6,6 +6,7 @@ alter table if exists public.owners enable row level security;
 alter table if exists public.tenants enable row level security;
 alter table if exists public.properties enable row level security;
 alter table if exists public.property_images enable row level security;
+alter table if exists public.property_applications enable row level security;
 alter table if exists public.rental_agreements enable row level security;
 alter table if exists public.rent_payments enable row level security;
 alter table if exists public.maintenance_requests enable row level security;
@@ -123,6 +124,35 @@ with check (true);
 drop policy if exists property_images_delete_anon on public.property_images;
 create policy property_images_delete_anon
 on public.property_images
+for delete
+to anon, authenticated
+using (true);
+
+drop policy if exists property_applications_select_anon on public.property_applications;
+create policy property_applications_select_anon
+on public.property_applications
+for select
+to anon, authenticated
+using (true);
+
+drop policy if exists property_applications_insert_anon on public.property_applications;
+create policy property_applications_insert_anon
+on public.property_applications
+for insert
+to anon, authenticated
+with check (true);
+
+drop policy if exists property_applications_update_anon on public.property_applications;
+create policy property_applications_update_anon
+on public.property_applications
+for update
+to anon, authenticated
+using (true)
+with check (true);
+
+drop policy if exists property_applications_delete_anon on public.property_applications;
+create policy property_applications_delete_anon
+on public.property_applications
 for delete
 to anon, authenticated
 using (true);

@@ -1,4 +1,5 @@
 import supabaseClient from "../core/supabaseClient.js";
+import { syncPropertyPipelineStatus } from "./applicationService.js";
 
 function normalizeRelation(value) {
   if (Array.isArray(value)) return value[0] || null;
@@ -79,4 +80,8 @@ export async function deleteAgreement(agreementId) {
     .from("rental_agreements")
     .delete()
     .eq("agreement_id", agreementId);
+}
+
+export async function syncPropertyAvailability(propertyId) {
+  return syncPropertyPipelineStatus(propertyId);
 }

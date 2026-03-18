@@ -10,6 +10,7 @@ import {
 import { formatCurrency, showToast } from "../utils/helpers.js";
 
 (async () => {
+  const PROPERTY_ACTIVITY_KEY = "propertiesUpdatedAt";
   const propertyCards = document.getElementById("propertyCards");
   if (!propertyCards) return;
 
@@ -48,6 +49,28 @@ import { formatCurrency, showToast } from "../utils/helpers.js";
   const budgetFilter = document.getElementById("budgetFilter");
   const searchBtn = document.getElementById("searchBtn");
 
+  function removeLegacyFilterUi() {
+    const controls = [cityFilter, statusFilter, searchInput, budgetFilter, searchBtn].filter(Boolean);
+    const containers = new Set();
+
+    controls.forEach((control) => {
+      const wrapper = control.closest(".toolbar-item, .field, .form-field, .filter-field, .search-bar, .toolbar")
+        || control.parentElement;
+      if (wrapper) {
+        containers.add(wrapper);
+      } else {
+        control.remove();
+      }
+    });
+
+    containers.forEach((container) => {
+      if (!container || container.id === "propertyCards" || container.contains(propertyCards)) return;
+      container.remove();
+    });
+  }
+
+  removeLegacyFilterUi();
+
   const detailsModal = document.getElementById("ownerPropertyDetailsModal");
   const detailsBody = document.getElementById("ownerPropertyDetailsBody");
   const closeDetailsBtn = document.getElementById("closeOwnerPropertyModal");
@@ -58,6 +81,7 @@ import { formatCurrency, showToast } from "../utils/helpers.js";
   const saveEditBtn = document.getElementById("saveOwnerEditBtn");
 
   const propertyMap = new Map();
+  let lastPropertyActivityStamp = localStorage.getItem(PROPERTY_ACTIVITY_KEY) || "";
 
   function getPropertyThumbnail(property) {
     return property.property_images?.[0]?.image_url || PROPERTY_IMAGE_PLACEHOLDER;
@@ -66,6 +90,7 @@ import { formatCurrency, showToast } from "../utils/helpers.js";
   function statusClass(status) {
     const value = String(status || "").toLowerCase();
     if (value === "available") return "status-pill status-available";
+    if (value === "reserved") return "status-pill status-pending";
     if (value === "rented") return "status-pill status-rented";
     return "status-pill status-inactive";
   }
@@ -163,27 +188,13 @@ import { formatCurrency, showToast } from "../utils/helpers.js";
   }
 
   async function fetchProperties() {
-    const cityVal = cityFilter?.value.trim() || "";
-    const statusVal = statusFilter?.value.trim() || "";
-    const searchVal = searchInput?.value.trim() || "";
-    const maxBudget = Number(budgetFilter?.value || 0);
-
     let data;
     let error;
 
     if (user.role === "owner") {
-      ({ data, error } = await getPropertiesByOwnerUserId(user.user_id, {
-        city: cityVal,
-        status: statusVal,
-        search: searchVal
-      }));
+      ({ data, error } = await getPropertiesByOwnerUserId(user.user_id));
     } else {
-      ({ data, error } = await listProperties({
-        city: cityVal,
-        status: statusVal,
-        search: searchVal,
-        maxBudget
-      }));
+      ({ data, error } = await listProperties());
     }
 
     if (error) {
@@ -192,6 +203,13 @@ import { formatCurrency, showToast } from "../utils/helpers.js";
     }
 
     renderCards(data || []);
+  }
+
+  async function refreshPropertiesIfChanged(force = false) {
+    const latestStamp = localStorage.getItem(PROPERTY_ACTIVITY_KEY) || "";
+    if (!force && latestStamp === lastPropertyActivityStamp) return;
+    lastPropertyActivityStamp = latestStamp;
+    await fetchProperties();
   }
 
   function renderCards(properties) {
@@ -284,15 +302,22 @@ import { formatCurrency, showToast } from "../utils/helpers.js";
     await fetchProperties();
   }
 
-  searchBtn?.addEventListener("click", fetchProperties);
+  window.addEventListener("properties:changed", () => {
+    lastPropertyActivityStamp = localStorage.getItem(PROPERTY_ACTIVITY_KEY) || String(Date.now());
+    void fetchProperties();
+  });
 
-  [searchInput, cityFilter].forEach((input) => {
-    input?.addEventListener("keydown", (event) => {
-      if (event.key === "Enter") {
-        event.preventDefault();
-        fetchProperties();
-      }
-    });
+  window.addEventListener("storage", (event) => {
+    if (event.key !== PROPERTY_ACTIVITY_KEY) return;
+    void refreshPropertiesIfChanged(true);
+  });
+
+  window.addEventListener("pageshow", () => {
+    void refreshPropertiesIfChanged(true);
+  });
+
+  window.addEventListener("focus", () => {
+    void refreshPropertiesIfChanged();
   });
 
   propertyCards.addEventListener("click", async (event) => {

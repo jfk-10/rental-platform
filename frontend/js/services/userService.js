@@ -79,11 +79,14 @@ export async function getOwners() {
     .select("owner_id,user_id,phone,address,city,owner_type")
     .order("owner_id", { ascending: true });
 
-  const records = await attachUsers(data || []);
+  if (error) {
+    return { data: null, error };
+  }
 
+  const owners = await attachUsers(data || []);
   return {
-    data: records.map((owner) => normalizeUserRelation(owner)),
-    error
+    data: owners.map((owner) => normalizeUserRelation(owner)),
+    error: null
   };
 }
 
@@ -93,11 +96,14 @@ export async function getTenants() {
     .select("tenant_id,user_id,phone,aadhaar_no,occupation,permanent_address,city")
     .order("tenant_id", { ascending: true });
 
-  const records = await attachUsers(data || []);
+  if (error) {
+    return { data: null, error };
+  }
 
+  const tenants = await attachUsers(data || []);
   return {
-    data: records.map((tenant) => normalizeUserRelation(tenant)),
-    error
+    data: tenants.map((tenant) => normalizeUserRelation(tenant)),
+    error: null
   };
 }
 
