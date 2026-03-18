@@ -11,7 +11,8 @@ const supabaseClient = createClient(SUPABASE_URL, SUPABASE_KEY, {
     persistSession: true,
     detectSessionInUrl: true,
     storage: authStorage,
-    storageKey: "nestfinder-auth"
+    storageKey: "nestfinder-auth",
+    multiTab: false
   }
 });
 
