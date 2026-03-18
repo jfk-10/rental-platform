@@ -3,6 +3,7 @@ import { listAgreements } from "../services/agreementService.js";
 import {
   createPayment,
   getDueMonthsForAgreement,
+  getMonthDateValue,
   getMonthKeyFromValue,
   listPayments,
   normalizePaymentStatus,
@@ -29,6 +30,16 @@ const pageParams = new URLSearchParams(window.location.search);
 
 const agreementMap = new Map();
 let paymentRecords = [];
+
+function formatPaymentMonth(value) {
+  const monthDate = getMonthDateValue(value);
+  if (!monthDate) return value || "-";
+
+  const date = new Date(`${monthDate}T00:00:00Z`);
+  if (Number.isNaN(date.getTime())) return getMonthKeyFromValue(value) || "-";
+
+  return date.toLocaleString("en-US", { month: "long", year: "numeric", timeZone: "UTC" });
+}
 
 function getCurrentDateValue() {
   return new Date().toISOString().slice(0, 10);
@@ -219,7 +230,7 @@ async function loadPaymentList() {
           <td>${payment.payment_id}</td>
           <td>${payment.agreement_id}</td>
           <td>${payment.rental_agreements?.tenants?.users?.name || "-"}</td>
-          <td>${payment.payment_month || "-"}</td>
+          <td>${formatPaymentMonth(payment.payment_month)}</td>
           <td>${formatCurrency(payment.amount_paid)}</td>
           <td>${formatDate(payment.payment_date)}</td>
           <td>${payment.payment_mode || "-"}</td>
