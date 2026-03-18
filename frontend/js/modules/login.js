@@ -7,8 +7,7 @@ renderFlashMessage("auth");
 
 function getDashboardPath(role) {
   if (role === "admin") return "/dashboards/admin.html";
-  if (role === "owner") return "/dashboards/owner.html";
-  if (role === "tenant") return "/dashboards/tenant.html";
+  if (role === "owner" || role === "tenant") return "/pages/select-dashboard.html";
   return null;
 }
 
@@ -79,8 +78,9 @@ async function ensureAppUserProfile(authUser, email) {
   }
 
   const fullName = String(authUser?.user_metadata?.name || "").trim();
-  const role = String(authUser?.user_metadata?.role || "").trim().toLowerCase();
-  if (!fullName || !["admin", "owner", "tenant"].includes(role)) {
+  const metadataRole = String(authUser?.user_metadata?.role || "").trim().toLowerCase();
+  const role = ["admin", "owner", "tenant"].includes(metadataRole) ? metadataRole : "tenant";
+  if (!fullName) {
     return { data: null, error: new Error("Unable to load account profile") };
   }
 

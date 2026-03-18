@@ -2,7 +2,7 @@ import supabaseClient from "../core/supabaseClient.js";
 import { setFlashMessage, showToast } from "../utils/helpers.js";
 
 const form = document.getElementById("registerForm");
-const REGISTRATION_ROLES = ["owner", "tenant"];
+const DEFAULT_SELF_REGISTERED_ROLE = "tenant";
 
 async function createAppUserProfile({ authUserId, fullName, email, role, password }) {
   return supabaseClient.from("users").insert({
@@ -35,15 +35,10 @@ if (form) {
     const fullName = document.getElementById("name").value.trim();
     const email = document.getElementById("email").value.trim().toLowerCase();
     const password = document.getElementById("password").value;
-    const role = document.getElementById("role").value;
+    const role = DEFAULT_SELF_REGISTERED_ROLE;
 
-    if (!fullName || !email || !password || !role) {
+    if (!fullName || !email || !password) {
       showToast("Please fill all required fields", "error");
-      return;
-    }
-
-    if (!REGISTRATION_ROLES.includes(role)) {
-      showToast("Only owner and tenant accounts can be self-registered", "error");
       return;
     }
 

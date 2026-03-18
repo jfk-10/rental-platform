@@ -100,12 +100,10 @@ function updatePublicAuthButtonsVisibility() {
   }
 
   if (navActions && user) {
-    let href = "../dashboards/tenant.html";
+    let href = "../pages/select-dashboard.html";
     let label = "Dashboard";
 
-    if (user.role === "owner") {
-      href = "../dashboards/owner.html";
-    } else if (user.role === "admin") {
+    if (user.role === "admin") {
       href = "../dashboards/admin.html";
     } else if (pathname.endsWith("/pages/tenant-property.html")) {
       href = "../pages/browse-rentals.html";

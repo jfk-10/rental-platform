@@ -1,7 +1,6 @@
 function getDashboardPath(role) {
   if (role === "admin") return "../dashboards/admin.html";
-  if (role === "owner") return "../dashboards/owner.html";
-  if (role === "tenant") return "../dashboards/tenant.html";
+  if (role === "owner" || role === "tenant") return "../pages/select-dashboard.html";
   return "../index.html";
 }
 

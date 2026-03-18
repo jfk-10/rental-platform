@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Select Dashboard | NestFinder</title>
+  <link rel="icon" href="/assets/icons/favicon.ico" type="image/x-icon">
+  <link rel="stylesheet" href="../css/global.css" />
+  <link rel="stylesheet" href="../css/forms.css" />
+  <link rel="stylesheet" href="../css/dashboard.css" />
+</head>
+<body class="app-body">
+  <div class="utility-bar" id="dashboardNavbar"></div>
+
+  <main class="page-shell content-stack" style="max-width:760px">
+    <section class="page-card">
+      <h2 class="section-title">Choose your dashboard</h2>
+      <p class="section-subtitle">Use the same account for both Owner and Tenant workflows.</p>
+
+      <div class="actions-row" style="margin-top:1.2rem; gap:.75rem; flex-wrap:wrap;">
+        <button id="openOwnerDashboardBtn" class="btn btn-primary" type="button">Owner Dashboard</button>
+        <button id="openTenantDashboardBtn" class="btn btn-secondary" type="button">Tenant Dashboard</button>
+      </div>
+
+      <p id="selectDashboardHint" class="helper-text" style="margin-top:1rem"></p>
+    </section>
+  </main>
+
+  <script type="module" src="../js/authGuard.js"></script>
+  <script type="module" src="../js/modules/selectDashboard.js"></script>
+  <script type="module" src="../components/navbar.js"></script>
+</body>
+</html>

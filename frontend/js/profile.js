@@ -26,6 +26,15 @@ function valueOrDash(value) {
   return value === null || value === undefined || value === "" ? "-" : String(value);
 }
 
+function formatMode(value) {
+  const normalized = String(value || "").trim().toLowerCase();
+  if (!normalized) return "-";
+  if (normalized === "admin") return "Admin";
+  if (normalized === "owner") return "Owner mode";
+  if (normalized === "tenant") return "Tenant mode";
+  return normalized[0].toUpperCase() + normalized.slice(1);
+}
+
 function getUserInitials(name) {
   if (!name) return "?";
   const parts = name.trim().split(/\s+/);
@@ -70,7 +79,7 @@ function updateHero(profile) {
 
   if (heroAvatar) heroAvatar.textContent = getUserInitials(profile.name || profile.email || "U");
   if (heroName) heroName.textContent = profile.name || profile.email || "-";
-  if (heroRole) heroRole.textContent = profile.role || "-";
+  if (heroRole) heroRole.textContent = formatMode(profile.role);
 }
 
 function showRoleFields(role) {
@@ -98,7 +107,11 @@ function renderProfile(profile) {
     const view = fieldView(id);
 
     if (input) input.value = String(value || "");
-    if (view) view.textContent = valueOrDash(value);
+    if (view) {
+      view.textContent = id === "profileRole"
+        ? formatMode(value)
+        : valueOrDash(value);
+    }
   });
 
   updateHero(profile);

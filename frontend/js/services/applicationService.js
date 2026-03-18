@@ -152,6 +152,33 @@ export async function listApplications({ tenantUserId = 0, ownerUserId = 0, prop
 }
 
 export async function createApplication({ property_id, tenantUserId, message = "" }) {
+  const normalizedPropertyId = Number(property_id);
+  const normalizedTenantUserId = Number(tenantUserId);
+
+  if (!normalizedPropertyId || !normalizedTenantUserId) {
+    return { data: null, error: new Error("Invalid property or tenant selection.") };
+  }
+
+  const { data: propertyRow, error: propertyLookupError } = await supabaseClient
+    .from("properties")
+    .select("owner_id")
+    .eq("property_id", normalizedPropertyId)
+    .maybeSingle();
+
+  if (propertyLookupError) return { data: null, error: propertyLookupError };
+  if (!propertyRow?.owner_id) return { data: null, error: new Error("Property not found.") };
+
+  const { data: ownerRow, error: ownerLookupError } = await supabaseClient
+    .from("owners")
+    .select("user_id")
+    .eq("owner_id", propertyRow.owner_id)
+    .maybeSingle();
+
+  if (ownerLookupError) return { data: null, error: ownerLookupError };
+  if (Number(ownerRow?.user_id || 0) === normalizedTenantUserId) {
+    return { data: null, error: new Error("You cannot apply to rent your own property.") };
+  }
+
   const tenantLookup = await getTenantIdByUserId(tenantUserId);
   if (tenantLookup.error) return { data: null, error: tenantLookup.error };
   if (!tenantLookup.tenantId) return { data: null, error: new Error("Tenant profile is incomplete.") };
@@ -159,7 +186,7 @@ export async function createApplication({ property_id, tenantUserId, message = "
   return supabaseClient
     .from("property_applications")
     .insert([{
-      property_id: Number(property_id),
+      property_id: normalizedPropertyId,
       tenant_id: tenantLookup.tenantId,
       status: "Interested",
       message: message || null
