@@ -20,12 +20,14 @@ const APPLICATION_SELECT_QUERY = `
     owners!properties_owner_id_fkey(
       owner_id,
       user_id,
+      phone,
       users!owners_user_id_fkey(name,email)
     )
   ),
   tenants!property_applications_tenant_id_fkey(
     tenant_id,
     user_id,
+    phone,
     city,
     occupation,
     users!tenants_user_id_fkey(name,email)

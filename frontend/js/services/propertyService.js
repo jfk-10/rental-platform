@@ -6,7 +6,7 @@ const RESIDENTIAL_PROPERTY_TYPES = new Set(["apartment", "house", "studio"]);
 const COMMERCIAL_PROPERTY_TYPES = new Set(["office", "shop", "commercial"]);
 const PROPERTY_SELECT_QUERY = `
   *,
-  owners!properties_owner_id_fkey(user_id,users!owners_user_id_fkey(name,email)),
+  owners!properties_owner_id_fkey(user_id,phone,users!owners_user_id_fkey(name,email)),
   property_images(image_id,image_url),
   rental_agreements(agreement_id,agreement_status,start_date,end_date),
   property_applications(application_id,status)

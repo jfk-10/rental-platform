@@ -26,6 +26,27 @@ const detailsModal = document.getElementById("tenantPropertyDetailsModal");
 const detailsBody = document.getElementById("tenantPropertyDetailsBody");
 const closeDetailsBtn = document.getElementById("closeTenantPropertyModal");
 
+function normalizePhone(phone) {
+  return String(phone || "").replace(/[^\d+]/g, "");
+}
+
+function getWhatsAppLink(phone, text) {
+  const normalizedPhone = normalizePhone(phone);
+  if (!normalizedPhone) return "";
+  return `https://wa.me/${encodeURIComponent(normalizedPhone)}?text=${encodeURIComponent(text)}`;
+}
+
+function renderOwnerContactActions(property, ownerName, ownerEmail, ownerPhone) {
+  const actions = [];
+  const subject = encodeURIComponent(`Rental inquiry for ${property.title || "your property"}`);
+  const body = encodeURIComponent(`Hi ${ownerName}, I am interested in your listing: ${property.title || property.address || "property"}.`);
+  const whatsappLink = getWhatsAppLink(ownerPhone, `Hi ${ownerName}, I'm interested in your listing "${property.title || property.address || "property"}".`);
+
+  if (ownerEmail) actions.push(`<a class="btn btn-secondary" href="mailto:${ownerEmail}?subject=${subject}&body=${body}">Email Owner</a>`);
+  if (whatsappLink) actions.push(`<a class="btn btn-ghost" href="${whatsappLink}" target="_blank" rel="noopener noreferrer">Chat on WhatsApp</a>`);
+  return actions.join("");
+}
+
 function removeLegacyBrowseFilters() {
   const controls = [searchInput, cityFilter, statusFilter, budgetFilter, searchBtn].filter(Boolean);
   const containers = new Set();
@@ -77,11 +98,10 @@ function renderPropertyCard(property) {
   const image = property.property_images?.[0]?.image_url || PROPERTY_IMAGE_PLACEHOLDER;
   const ownerName = property.owners?.users?.name || "Owner";
   const ownerEmail = property.owners?.users?.email || "";
+  const ownerPhone = property.owners?.phone || "";
   const specs = getPropertySpecs(property);
   const propertyType = property.property_type || "";
-  const contactAction = ownerEmail
-    ? `<a class="btn btn-secondary" href="mailto:${ownerEmail}">Contact Owner</a>`
-    : "";
+  const contactAction = renderOwnerContactActions(property, ownerName, ownerEmail, ownerPhone);
   const application = applicationMap.get(property.property_id);
   const interestLabel = application?.status || "";
   const interestAction = application
@@ -101,6 +121,7 @@ function renderPropertyCard(property) {
         <p class="property-rent"><strong>${formatCurrency(property.rent_amount)}</strong> <span>/ month</span></p>
         <p class="property-meta"><strong>Status:</strong> ${property.status || "Unknown"}</p>
         <p class="property-meta"><strong>Listed by:</strong> ${ownerName}</p>
+        <p class="property-meta"><strong>Owner contact:</strong> ${ownerPhone || ownerEmail || "-"}</p>
         ${application ? `<p class="property-meta"><strong>Your interest:</strong> ${interestLabel}</p>` : ""}
         <div class="actions-row compact-actions">
           <button class="btn btn-primary viewDetailsBtn" type="button" data-id="${property.property_id}">View Details</button>
@@ -129,9 +150,8 @@ function openDetailsModal(property) {
   const specs = getPropertySpecs(property);
   const ownerName = property.owners?.users?.name || "Owner";
   const ownerEmail = property.owners?.users?.email || "";
-  const contactAction = ownerEmail
-    ? `<a class="btn btn-primary" href="mailto:${ownerEmail}">Contact Owner</a>`
-    : "";
+  const ownerPhone = property.owners?.phone || "";
+  const contactAction = renderOwnerContactActions(property, ownerName, ownerEmail, ownerPhone);
 
   detailsBody.innerHTML = `
     <div class="property-detail-grid">
@@ -146,6 +166,7 @@ function openDetailsModal(property) {
           <p><strong>Rent:</strong> ${formatCurrency(property.rent_amount)} / month</p>
           <p><strong>Status:</strong> ${property.status || "Unknown"}</p>
           <p><strong>Listed by:</strong> ${ownerName}</p>
+          <p><strong>Owner contact:</strong> ${ownerPhone || ownerEmail || "-"}</p>
           <p><strong>Usage:</strong> ${property.allowed_usage || "-"}</p>
         </div>
         <div class="callout">
