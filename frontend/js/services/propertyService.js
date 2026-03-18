@@ -7,7 +7,8 @@ const COMMERCIAL_PROPERTY_TYPES = new Set(["office", "shop", "commercial"]);
 const PROPERTY_SELECT_QUERY = `
   *,
   owners!properties_owner_id_fkey(user_id,users!owners_user_id_fkey(name,email)),
-  property_images(image_id,image_url)
+  property_images(image_id,image_url),
+  rental_agreements(agreement_id,agreement_status,start_date,end_date)
 `;
 
 export const PROPERTY_IMAGE_PLACEHOLDER = "https://images.unsplash.com/photo-1560184897-ae75f418493e";
@@ -63,6 +64,36 @@ function normalizeImageRows(images = []) {
     .sort((left, right) => Number(left.image_id || 0) - Number(right.image_id || 0));
 }
 
+function normalizeStatus(value) {
+  return String(value || "").trim().toUpperCase();
+}
+
+function getTodayLocalIso() {
+  const today = new Date();
+  const timezoneOffset = today.getTimezoneOffset() * 60000;
+  return new Date(today.getTime() - timezoneOffset).toISOString().slice(0, 10);
+}
+
+function hasLiveActiveAgreement(agreements = []) {
+  if (!Array.isArray(agreements) || !agreements.length) return false;
+
+  const today = getTodayLocalIso();
+  return agreements.some((agreement) => {
+    const status = normalizeStatus(agreement?.agreement_status);
+    if (status !== "ACTIVE") return false;
+
+    const endDate = String(agreement?.end_date || "").slice(0, 10);
+    return !endDate || endDate >= today;
+  });
+}
+
+function derivePropertyStatus(property) {
+  const baseStatus = normalizeStatus(property?.status);
+  if (baseStatus === "INACTIVE") return "Inactive";
+  if (hasLiveActiveAgreement(property?.rental_agreements)) return "Rented";
+  return "Available";
+}
+
 function normalizePropertyRecord(property) {
   if (!property) return property;
 
@@ -71,22 +102,37 @@ function normalizePropertyRecord(property) {
 
   return {
     ...property,
+    status: derivePropertyStatus(property),
     owners: owner
       ? {
         ...owner,
         users: ownerUser
       }
       : owner,
-    property_images: normalizeImageRows(property.property_images)
+    property_images: normalizeImageRows(property.property_images),
+    rental_agreements: Array.isArray(property.rental_agreements) ? property.rental_agreements : []
   };
 }
 
-async function runPropertyListQuery(query) {
+function filterPropertiesByStatus(properties = [], status = "") {
+  if (!status) return properties;
+  const expectedStatus = normalizeStatus(status);
+  return properties.filter((property) => normalizeStatus(property.status) === expectedStatus);
+}
+
+async function runPropertyListQuery(query, { status = "", limit = 0 } = {}) {
   const { data, error } = await query;
   if (error) return { data: null, error };
 
+  let properties = (data || []).map((property) => normalizePropertyRecord(property));
+  properties = filterPropertiesByStatus(properties, status);
+
+  if (limit) {
+    properties = properties.slice(0, limit);
+  }
+
   return {
-    data: (data || []).map((property) => normalizePropertyRecord(property)),
+    data: properties,
     error: null
   };
 }
@@ -108,12 +154,10 @@ export async function listProperties({ city = "", status = "", search = "", maxB
     .order("created_at", { ascending: false });
 
   if (city) query = query.ilike("city", `%${city}%`);
-  if (status) query = query.eq("status", status);
   if (search) query = query.or(`title.ilike.%${search}%,city.ilike.%${search}%,property_type.ilike.%${search}%`);
   if (maxBudget) query = query.lte("rent_amount", maxBudget);
-  if (limit) query = query.limit(limit);
 
-  return runPropertyListQuery(query);
+  return runPropertyListQuery(query, { status, limit });
 }
 
 export async function getPropertyById(propertyId) {
@@ -148,11 +192,9 @@ export async function getPropertiesByOwnerUserId(userId, { city = "", status = "
     .order("property_id", { ascending: false });
 
   if (city) query = query.ilike("city", `%${city}%`);
-  if (status) query = query.eq("status", status);
   if (search) query = query.or(`title.ilike.%${search}%,city.ilike.%${search}%,property_type.ilike.%${search}%`);
-  if (limit) query = query.limit(limit);
 
-  return runPropertyListQuery(query);
+  return runPropertyListQuery(query, { status, limit });
 }
 
 export async function getPropertiesByOwner(ownerId) {
@@ -161,7 +203,8 @@ export async function getPropertiesByOwner(ownerId) {
       .from("properties")
       .select(PROPERTY_SELECT_QUERY)
       .eq("owner_id", ownerId)
-      .order("property_id", { ascending: false })
+      .order("property_id", { ascending: false }),
+    {}
   );
 }
 

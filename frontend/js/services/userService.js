@@ -6,10 +6,13 @@ function normalizeRelation(value) {
 }
 
 function normalizeUserRelation(record) {
+  const user = normalizeRelation(record?.users);
   if (!record) return record;
   return {
     ...record,
-    users: normalizeRelation(record.users)
+    users: user,
+    name: record.name || user?.name || null,
+    email: record.email || user?.email || null
   };
 }
 

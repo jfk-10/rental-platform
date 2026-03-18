@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <title>NestFinder — Find Your Perfect Rental</title>
-  <meta name="description" content="Search verified rental properties by city, type and budget. Apartments, houses, studios, offices and shops." />
+  <title>NestFinder | Find Your Perfect Rental</title>
+  <meta name="description" content="Browse verified rental properties, compare locations, and move from discovery to agreement with confidence." />
   <link rel="icon" href="/assets/icons/favicon.ico" type="image/x-icon">
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -13,7 +13,7 @@
 
 <header class="landing-hero">
   <nav class="landing-nav shell-panel">
-    <strong class="brand-mark">🏠 NestFinder</strong>
+    <strong class="brand-mark">NestFinder</strong>
     <div class="landing-links">
       <a href="./index.html">Home</a>
       <a href="./pages/about.html">About</a>
@@ -21,8 +21,8 @@
       <a href="./pages/terms.html">Terms &amp; Conditions</a>
     </div>
     <div class="actions-row nav-actions">
-      <a id="loginBtn"  class="btn btn-secondary" href="./pages/login.html">Login</a>
-      <a id="signupBtn" class="btn btn-primary"   href="./pages/register.html">Sign up</a>
+      <a id="loginBtn" class="btn btn-secondary" href="./pages/login.html">Login</a>
+      <a id="signupBtn" class="btn btn-primary" href="./pages/register.html">Sign up</a>
     </div>
   </nav>
 
@@ -32,27 +32,8 @@
       <h1>Find your next home with <span>NestFinder</span>.</h1>
       <p>Search listings, compare locations, and move from discovery to agreement with confidence.</p>
 
-      <!-- ── Hero search bar — redirects to discover with URL params ── -->
-      <form id="heroSearchForm" class="hero-search-bar" autocomplete="off">
-        <div class="hero-search-field">
-          <label for="heroCity" class="sr-only">City</label>
-          <input id="heroCity" type="text" placeholder="🏙 City (e.g. Bangalore)" autocomplete="off" />
-        </div>
-        <div class="hero-search-field">
-          <label for="heroStatus" class="sr-only">Status</label>
-          <select id="heroStatus">
-            <option value="Available">Available</option>
-            <option value="">Any status</option>
-          </select>
-        </div>
-        <div class="hero-search-field">
-          <label for="heroBudget" class="sr-only">Max Budget</label>
-          <input id="heroBudget" type="text" inputmode="numeric" placeholder="💰 Max rent (₹)" autocomplete="off" />
-        </div>
-        <button class="btn btn-primary" type="submit">Search</button>
-      </form>
-
       <div class="actions-row" style="margin-top:1rem">
+        <a class="btn btn-primary" href="./pages/discover.html">Explore rentals</a>
         <a class="btn btn-secondary" href="./pages/about.html">See platform benefits</a>
       </div>
     </div>
@@ -63,9 +44,9 @@
       <div class="hero-illustration" aria-hidden="true">
         <div class="illustration-house"></div>
         <div class="illustration-card">
-          <p>🏢 Verified listings</p>
-          <p>📍 Real-time location matching</p>
-          <p>🔐 Secure agreements + payments</p>
+          <p>Verified listings</p>
+          <p>Real-time location matching</p>
+          <p>Secure agreements and payments</p>
         </div>
       </div>
       <div class="hero-preview-card">
@@ -88,20 +69,5 @@
 </footer>
 
 <script type="module" src="./js/modules/home.js"></script>
-<script type="module">
-  // Hero search → redirect to discover page with URL params
-  const form = document.getElementById("heroSearchForm");
-  form?.addEventListener("submit", (e) => {
-    e.preventDefault();
-    const city   = document.getElementById("heroCity").value.trim();
-    const status = document.getElementById("heroStatus").value;
-    const budget = document.getElementById("heroBudget").value.trim();
-    const params = new URLSearchParams();
-    if (city)   params.set("city",   city);
-    if (status) params.set("status", status);
-    if (budget) params.set("budget", budget);
-    window.location.href = `./pages/discover.html?${params.toString()}`;
-  });
-</script>
 </body>
 </html>

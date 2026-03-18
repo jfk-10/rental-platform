@@ -201,10 +201,10 @@ import { formatCurrency, showToast } from "../utils/helpers.js";
       propertyCards.innerHTML = `
         <div class="empty-state card">
           <h3>No properties found</h3>
-          <p>${user.role === "owner" ? "Add your first listing or change your filters." : "Try changing city, status, or budget filters."}</p>
+          <p>${user.role === "owner" ? "Add your first listing to start managing it here." : "Platform listings will appear here once owners publish them."}</p>
           ${user.role === "owner"
             ? "<a class='btn btn-primary' href='../pages/add-property.html'>Add Property</a>"
-            : "<button class='btn btn-primary' type='button' id='resetPropertyFilters'>Reset Filters</button>"}
+            : ""}
         </div>
       `;
       return;
@@ -298,15 +298,6 @@ import { formatCurrency, showToast } from "../utils/helpers.js";
   propertyCards.addEventListener("click", async (event) => {
     const target = event.target;
     if (!(target instanceof HTMLElement)) return;
-
-    if (target.id === "resetPropertyFilters") {
-      if (cityFilter) cityFilter.value = "";
-      if (statusFilter) statusFilter.value = "";
-      if (searchInput) searchInput.value = "";
-      if (budgetFilter) budgetFilter.value = "";
-      await fetchProperties();
-      return;
-    }
 
     const button = target.closest("button");
     if (!(button instanceof HTMLButtonElement)) return;

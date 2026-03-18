@@ -43,8 +43,12 @@ function getPropertySpecs(property) {
 function renderPropertyCard(property) {
   const image = property.property_images?.[0]?.image_url || PROPERTY_IMAGE_PLACEHOLDER;
   const ownerName = property.owners?.users?.name || "Owner";
+  const ownerEmail = property.owners?.users?.email || "";
   const specs = getPropertySpecs(property);
   const propertyType = property.property_type || "";
+  const contactAction = ownerEmail
+    ? `<a class="btn btn-secondary" href="mailto:${ownerEmail}">Contact Owner</a>`
+    : "";
 
   return `
     <article class="property-card card property-card--tenant">
@@ -61,6 +65,7 @@ function renderPropertyCard(property) {
         <p class="property-meta"><strong>Listed by:</strong> ${ownerName}</p>
         <div class="actions-row compact-actions">
           <button class="btn btn-primary viewDetailsBtn" type="button" data-id="${property.property_id}">View Details</button>
+          ${contactAction}
         </div>
       </div>
     </article>
@@ -155,15 +160,14 @@ async function loadBrowseRentals() {
     });
 
     if (browseSummary) {
-      const activeFilters = [search, city, status, maxBudget ? `up to Rs ${maxBudget}` : ""].filter(Boolean);
       browseSummary.textContent = listings.length
-        ? `Showing ${listings.length} listing${listings.length === 1 ? "" : "s"}${activeFilters.length ? ` for ${activeFilters.join(", ")}` : ""}.`
-        : "No listings matched the current filters.";
+        ? `Showing ${listings.length} available listing${listings.length === 1 ? "" : "s"} for tenants.`
+        : "No available rentals are listed right now.";
     }
 
     browseGrid.innerHTML = listings.length
       ? listings.map((property) => renderPropertyCard(property)).join("")
-      : renderEmptyState("No rentals found", "Try another city, widen your budget, or reset the filters.");
+      : renderEmptyState("No rentals found", "Check back soon for new owner listings.");
   } finally {
     if (searchBtn) {
       searchBtn.disabled = false;

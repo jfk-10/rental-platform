@@ -105,7 +105,7 @@ function renderOwnersTable(owners, propertyCounts, ownerAgreementStats) {
   if (!ownersTableEl) return;
 
   const sortedOwners = [...owners].sort((left, right) =>
-    String(left.name || "").localeCompare(String(right.name || ""), undefined, { sensitivity: "base" })
+    String(left.name || left.users?.name || "").localeCompare(String(right.name || right.users?.name || ""), undefined, { sensitivity: "base" })
   );
 
   ownersTableEl.innerHTML = sortedOwners.length
@@ -114,8 +114,8 @@ function renderOwnersTable(owners, propertyCounts, ownerAgreementStats) {
         const stats = ownerAgreementStats.get(owner.owner_id) || { total: 0, active: 0, pending: 0 };
         return `
           <tr>
-            <td>${escapeHtml(owner.name || "-")}</td>
-            <td>${escapeHtml(owner.email || "-")}</td>
+            <td>${escapeHtml(owner.name || owner.users?.name || "-")}</td>
+            <td>${escapeHtml(owner.email || owner.users?.email || "-")}</td>
             <td>${escapeHtml(owner.city || "-")}</td>
             <td>${escapeHtml(owner.owner_type || "-")}</td>
             <td>${propertyCounts.get(owner.owner_id) || 0}</td>
@@ -132,7 +132,7 @@ function renderTenantsTable(tenants, tenantAgreementStats) {
   if (!tenantsTableEl) return;
 
   const sortedTenants = [...tenants].sort((left, right) =>
-    String(left.name || "").localeCompare(String(right.name || ""), undefined, { sensitivity: "base" })
+    String(left.name || left.users?.name || "").localeCompare(String(right.name || right.users?.name || ""), undefined, { sensitivity: "base" })
   );
 
   tenantsTableEl.innerHTML = sortedTenants.length
@@ -141,8 +141,8 @@ function renderTenantsTable(tenants, tenantAgreementStats) {
         const stats = tenantAgreementStats.get(tenant.tenant_id) || { total: 0, active: 0, pending: 0 };
         return `
           <tr>
-            <td>${escapeHtml(tenant.name || "-")}</td>
-            <td>${escapeHtml(tenant.email || "-")}</td>
+            <td>${escapeHtml(tenant.name || tenant.users?.name || "-")}</td>
+            <td>${escapeHtml(tenant.email || tenant.users?.email || "-")}</td>
             <td>${escapeHtml(tenant.city || "-")}</td>
             <td>${escapeHtml(tenant.occupation || "-")}</td>
             <td>${stats.active}</td>

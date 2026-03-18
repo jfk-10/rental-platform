@@ -194,7 +194,7 @@ async function loadSelectOptions() {
     .join("")}`;
 
   tenantSelect.innerHTML = `<option value="">Select Tenant</option>${(tenants || [])
-    .map((tenant) => `<option value="${tenant.tenant_id}">#${tenant.tenant_id} - ${tenant.name || "-"}</option>`)
+    .map((tenant) => `<option value="${tenant.tenant_id}">#${tenant.tenant_id} - ${tenant.name || tenant.users?.name || "-"}</option>`)
     .join("")}`;
 }
 
