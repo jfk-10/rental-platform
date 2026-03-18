@@ -4,12 +4,11 @@ const SESSION_RETRY_DELAYS_MS = [0, 120, 250, 500];
 
 const SESSION_KEYS = {
   mode: "sessionMode",
-  authToken: "authToken"
+  authToken: "authToken",
+  appUser: "appUser"
 };
 
 const SUPABASE_AUTH_STORAGE_KEY = "nestfinder-auth";
-
-let currentUser = null;
 
 function getLoginPath() {
   return "/pages/login.html";
@@ -41,15 +40,31 @@ function getStoredSessionMode() {
 }
 
 export function getStoredAuthUser() {
-  return null;
+  return getStoredUser();
 }
 
 export function getStoredUser() {
-  return currentUser;
+  const rawUser = getSessionValue(SESSION_KEYS.appUser);
+  if (!rawUser) return null;
+
+  try {
+    return JSON.parse(rawUser);
+  } catch {
+    return null;
+  }
+}
+
+function setStoredUser(user = null) {
+  if (!user) {
+    sessionStorage.removeItem(SESSION_KEYS.appUser);
+    return;
+  }
+
+  setSessionValue(SESSION_KEYS.appUser, JSON.stringify(user));
 }
 
 export function storeUserSession(authUser, appUser = null, { mode = getStoredSessionMode(), sessionToken = "" } = {}) {
-  currentUser = appUser || null;
+  setStoredUser(appUser || null);
   setSessionValue(SESSION_KEYS.mode, mode);
 
   if (sessionToken) {
@@ -66,7 +81,6 @@ export function storeUserSession(authUser, appUser = null, { mode = getStoredSes
 }
 
 export function clearStoredUser() {
-  currentUser = null;
   Object.values(SESSION_KEYS).forEach((key) => {
     sessionStorage.removeItem(key);
   });
@@ -74,7 +88,7 @@ export function clearStoredUser() {
 }
 
 function shouldRetrySessionLookup() {
-  return Boolean(currentUser || getSessionValue(SESSION_KEYS.authToken));
+  return Boolean(getStoredUser() || getSessionValue(SESSION_KEYS.authToken));
 }
 
 function wait(ms) {
@@ -178,13 +192,13 @@ async function getUserWithProfileByAuth(authUser) {
     ...(roleProfile || {})
   };
 
-  currentUser = mergedUser;
+  setStoredUser(mergedUser);
   return mergedUser;
 }
 
 function getLocalModeUser() {
   if (getStoredSessionMode() !== "local") return null;
-  return currentUser;
+  return getStoredUser();
 }
 
 export async function syncStoredUserWithSession() {
@@ -200,7 +214,7 @@ export async function syncStoredUserWithSession() {
   }
 
   if (!error) {
-    currentUser = null;
+    setStoredUser(null);
     return null;
   }
 
