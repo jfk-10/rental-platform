@@ -10,6 +10,7 @@ const SESSION_KEYS = {
   role: "role",
   name: "name",
   email: "userEmail",
+  sessionToken: "sessionToken",
   bootstrapAt: "sessionBootstrapAt",
   mode: "sessionMode"
 };
@@ -65,7 +66,9 @@ function getStoredSessionMode() {
   return getSessionValue(SESSION_KEYS.mode) || "supabase";
 }
 
-function getCachedUserForEmail(email, authUserId = "") {
+function getCachedUserForSession(authUser) {
+  const email = authUser?.email || "";
+  const authUserId = authUser?.id || "";
   const cachedUser = getStoredUser();
   if (!cachedUser?.email) return null;
   if (normalizeEmail(cachedUser.email) !== normalizeEmail(email)) return null;
@@ -100,7 +103,7 @@ export function getStoredUser() {
   return readJson(sessionStorage, SESSION_KEYS.appUser);
 }
 
-export function storeUserSession(authUser, appUser = null, { mode = getStoredSessionMode() } = {}) {
+export function storeUserSession(authUser, appUser = null, { mode = getStoredSessionMode(), sessionToken = "" } = {}) {
   if (authUser) {
     setSessionJson(SESSION_KEYS.authUser, {
       id: authUser.id,
@@ -116,6 +119,7 @@ export function storeUserSession(authUser, appUser = null, { mode = getStoredSes
     setSessionValue(SESSION_KEYS.email, appUser.email || "");
   }
 
+  setSessionValue(SESSION_KEYS.sessionToken, sessionToken || "");
   setSessionValue(SESSION_KEYS.bootstrapAt, Date.now());
   setSessionValue(SESSION_KEYS.mode, mode);
 }
@@ -165,14 +169,35 @@ async function resolveSession({ retryIfStored = false } = {}) {
   return { session: null, error: lastError };
 }
 
-async function getUserWithProfileByEmail(email, { authUserId = "" } = {}) {
-  const normalizedEmail = normalizeEmail(email);
+async function getUserWithProfileByAuth(authUser) {
+  const normalizedEmail = normalizeEmail(authUser?.email);
+  const authUserId = authUser?.id || "";
+  if (!normalizedEmail) return null;
 
-  const { data: user, error: userError } = await supabaseClient
-    .from("users")
-    .select("user_id,name,email,role,auth_user_id,profile_completed")
-    .eq("email", normalizedEmail)
-    .maybeSingle();
+  let user = null;
+  let userError = null;
+
+  if (authUserId) {
+    const authUserLookup = await supabaseClient
+      .from("users")
+      .select("user_id,name,email,role,auth_user_id,profile_completed")
+      .eq("auth_user_id", authUserId)
+      .maybeSingle();
+
+    user = authUserLookup.data;
+    userError = authUserLookup.error;
+  }
+
+  if (!user && !userError) {
+    const emailLookup = await supabaseClient
+      .from("users")
+      .select("user_id,name,email,role,auth_user_id,profile_completed")
+      .eq("email", normalizedEmail)
+      .maybeSingle();
+
+    user = emailLookup.data;
+    userError = emailLookup.error;
+  }
 
   if (userError || !user) return null;
 
@@ -216,11 +241,7 @@ async function getUserWithProfileByEmail(email, { authUserId = "" } = {}) {
     ...(roleProfile || {})
   };
 
-  storeUserSession(
-    { id: authUserId || mergedUser.auth_user_id || mergedUser.user_id, email: mergedUser.email },
-    mergedUser,
-    { mode: "supabase" }
-  );
+  storeUserSession(authUser, mergedUser, { mode: "supabase" });
 
   return mergedUser;
 }
@@ -235,13 +256,16 @@ export async function syncStoredUserWithSession() {
   const localModeUser = getLocalModeUser();
 
   if (session?.user?.email) {
-    const cachedUser = getCachedUserForEmail(session.user.email, session.user.id);
+    const cachedUser = getCachedUserForSession(session.user);
     if (cachedUser?.role && isHydratedRoleProfile(cachedUser)) {
-      storeUserSession(session.user, cachedUser, { mode: "supabase" });
+      storeUserSession(session.user, cachedUser, {
+        mode: "supabase",
+        sessionToken: session.access_token || ""
+      });
       return cachedUser;
     }
 
-    return getUserWithProfileByEmail(session.user.email, { authUserId: session.user.id });
+    return getUserWithProfileByAuth(session.user);
   }
 
   if (localModeUser) {
@@ -288,10 +312,10 @@ export async function requireUser(allowedRoles = []) {
     return null;
   }
 
-  const cachedUser = getCachedUserForEmail(session.user.email, session.user.id);
+  const cachedUser = getCachedUserForSession(session.user);
   const user = cachedUser?.role && isHydratedRoleProfile(cachedUser)
     ? cachedUser
-    : await getUserWithProfileByEmail(session.user.email, { authUserId: session.user.id });
+    : await getUserWithProfileByAuth(session.user);
 
   if (!user) {
     clearStoredUser();
@@ -363,14 +387,17 @@ export function watchAuthState(onChange) {
       return;
     }
 
-    const cachedUser = getCachedUserForEmail(activeSession.user.email, activeSession.user.id);
+    const cachedUser = getCachedUserForSession(activeSession.user);
     if (cachedUser?.role && isHydratedRoleProfile(cachedUser)) {
-      storeUserSession(activeSession.user, cachedUser, { mode: "supabase" });
+      storeUserSession(activeSession.user, cachedUser, {
+        mode: "supabase",
+        sessionToken: activeSession.access_token || ""
+      });
       emitIfLatest(cachedUser);
       return;
     }
 
-    const user = await getUserWithProfileByEmail(activeSession.user.email, { authUserId: activeSession.user.id });
+    const user = await getUserWithProfileByAuth(activeSession.user);
     emitIfLatest(user);
   });
 }
