@@ -18,12 +18,12 @@
         <div class="panel-header">
           <div>
             <h1 class="section-title">Admin Dashboard</h1>
-            <p class="section-subtitle" id="adminDashboardStatus">Loading owner, tenant, property, and agreement summaries...</p>
+            <p class="section-subtitle" id="adminDashboardStatus">Loading user, property, and agreement summaries...</p>
           </div>
         </div>
         <div class="kpi-grid">
-          <article class="kpi-card metric-card"><p class="kpi-label">Owners</p><p class="kpi-value" id="adminTotalOwners">0</p></article>
-          <article class="kpi-card metric-card"><p class="kpi-label">Tenants</p><p class="kpi-value" id="adminTotalTenants">0</p></article>
+          <article class="kpi-card metric-card"><p class="kpi-label">Total Users</p><p class="kpi-value" id="adminTotalUsers">0</p></article>
+          <article class="kpi-card metric-card"><p class="kpi-label">Active Profiles</p><p class="kpi-value" id="adminActiveProfiles">0</p></article>
           <article class="kpi-card metric-card"><p class="kpi-label">Total Properties</p><p class="kpi-value" id="adminTotalProperties">0</p></article>
           <article class="kpi-card metric-card"><p class="kpi-label">Active Agreements</p><p class="kpi-value" id="adminActiveAgreements">0</p></article>
           <article class="kpi-card metric-card"><p class="kpi-label">Awaiting Approval</p><p class="kpi-value" id="adminPendingApprovals">0</p></article>
@@ -33,49 +33,25 @@
       <section class="page-card content-stack">
         <div class="panel-header">
           <div>
-            <h2 class="section-title">Owner Portfolio Overview</h2>
-            <p class="section-subtitle">Track each owner, their property count, and the agreements currently running under them.</p>
+            <h2 class="section-title">Users Overview</h2>
+            <p class="section-subtitle">Single directory view of every account with role, profile status, and agreement activity.</p>
           </div>
         </div>
         <div class="table-wrap">
           <table>
             <thead>
               <tr>
-                <th>Owner</th>
+                <th>User</th>
+                <th>Role</th>
                 <th>Email</th>
+                <th>Phone</th>
                 <th>City</th>
-                <th>Owner Type</th>
                 <th>Properties</th>
                 <th>Active Agreements</th>
-                <th>Total Agreements</th>
-              </tr>
-            </thead>
-            <tbody id="adminOwnersTable"></tbody>
-          </table>
-        </div>
-      </section>
-
-      <section class="page-card content-stack">
-        <div class="panel-header">
-          <div>
-            <h2 class="section-title">Tenant Activity Overview</h2>
-            <p class="section-subtitle">See every tenant, their active agreements, and who is still waiting on approval.</p>
-          </div>
-        </div>
-        <div class="table-wrap">
-          <table>
-            <thead>
-              <tr>
-                <th>Tenant</th>
-                <th>Email</th>
-                <th>City</th>
-                <th>Occupation</th>
-                <th>Active Agreements</th>
                 <th>Pending Approvals</th>
-                <th>Total Agreements</th>
               </tr>
             </thead>
-            <tbody id="adminTenantsTable"></tbody>
+            <tbody id="adminUsersTable"></tbody>
           </table>
         </div>
       </section>
@@ -93,7 +69,9 @@
               <tr>
                 <th>Property</th>
                 <th>Owner</th>
+                <th>Owner Contact</th>
                 <th>Tenant</th>
+                <th>Tenant Contact</th>
                 <th>Status</th>
                 <th>Requested On</th>
               </tr>
@@ -110,4 +88,3 @@
   <script type="module" src="../components/navbar.js"></script>
 </body>
 </html>
-

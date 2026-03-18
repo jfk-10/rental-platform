@@ -1,18 +1,17 @@
 import { requireUser } from "../core/auth.js";
 import { listApplications } from "../services/applicationService.js";
-import { getOwners, getTenants } from "../services/userService.js";
+import { getAllUsers } from "../services/userService.js";
 import { listProperties } from "../services/propertyService.js";
 import { listAgreements } from "../services/agreementService.js";
 import { showToast } from "../utils/helpers.js";
 
 const statusEl = document.getElementById("adminDashboardStatus");
-const totalOwnersEl = document.getElementById("adminTotalOwners");
-const totalTenantsEl = document.getElementById("adminTotalTenants");
+const totalUsersEl = document.getElementById("adminTotalUsers");
+const activeProfilesEl = document.getElementById("adminActiveProfiles");
 const totalPropertiesEl = document.getElementById("adminTotalProperties");
 const activeAgreementsEl = document.getElementById("adminActiveAgreements");
 const pendingApprovalsEl = document.getElementById("adminPendingApprovals");
-const ownersTableEl = document.getElementById("adminOwnersTable");
-const tenantsTableEl = document.getElementById("adminTenantsTable");
+const usersTableEl = document.getElementById("adminUsersTable");
 const applicationsTableEl = document.getElementById("adminApplicationsTable");
 
 const ACTIVE_STATUS = "ACTIVE";
@@ -66,16 +65,15 @@ function ensureStatsRecord(targetMap, key) {
   return targetMap.get(key);
 }
 
-function buildAgreementStats(agreements) {
-  const ownerStats = new Map();
-  const tenantStats = new Map();
+function buildAgreementStatsByUser(agreements) {
+  const statsByUser = new Map();
 
   agreements.forEach((agreement) => {
-    const ownerId = agreement.properties?.owner_id;
-    const tenantId = agreement.tenant_id;
+    const ownerUserId = agreement.properties?.owners?.user_id;
+    const tenantUserId = agreement.tenants?.user_id;
 
-    const ownerRecord = ensureStatsRecord(ownerStats, ownerId);
-    const tenantRecord = ensureStatsRecord(tenantStats, tenantId);
+    const ownerRecord = ensureStatsRecord(statsByUser, ownerUserId);
+    const tenantRecord = ensureStatsRecord(statsByUser, tenantUserId);
 
     if (ownerRecord) ownerRecord.total += 1;
     if (tenantRecord) tenantRecord.total += 1;
@@ -92,69 +90,45 @@ function buildAgreementStats(agreements) {
     }
   });
 
-  return { ownerStats, tenantStats };
+  return statsByUser;
 }
 
-function buildPropertyCounts(properties) {
+function buildPropertyCountsByUser(properties) {
   return properties.reduce((counts, property) => {
-    const ownerId = property.owner_id;
-    counts.set(ownerId, (counts.get(ownerId) || 0) + 1);
+    const ownerUserId = property.owners?.user_id;
+    if (!ownerUserId) return counts;
+    counts.set(ownerUserId, (counts.get(ownerUserId) || 0) + 1);
     return counts;
   }, new Map());
 }
 
-function renderOwnersTable(owners, propertyCounts, ownerAgreementStats) {
-  if (!ownersTableEl) return;
+function renderUsersTable(users, propertyCountsByUser, agreementStatsByUser) {
+  if (!usersTableEl) return;
 
-  const sortedOwners = [...owners].sort((left, right) =>
-    String(left.name || left.users?.name || "").localeCompare(String(right.name || right.users?.name || ""), undefined, { sensitivity: "base" })
+  const sortedUsers = [...users].sort((left, right) =>
+    String(left.name || "").localeCompare(String(right.name || ""), undefined, { sensitivity: "base" })
   );
 
-  ownersTableEl.innerHTML = sortedOwners.length
-    ? sortedOwners
-      .map((owner) => {
-        const stats = ownerAgreementStats.get(owner.owner_id) || { total: 0, active: 0, pending: 0 };
+  usersTableEl.innerHTML = sortedUsers.length
+    ? sortedUsers
+      .map((user) => {
+        const stats = agreementStatsByUser.get(user.user_id) || { total: 0, active: 0, pending: 0 };
+        const contact = user.phone || "-";
         return `
           <tr>
-            <td>${escapeHtml(owner.name || owner.users?.name || "-")}</td>
-            <td>${escapeHtml(owner.email || owner.users?.email || "-")}</td>
-            <td>${escapeHtml(owner.city || "-")}</td>
-            <td>${escapeHtml(owner.owner_type || "-")}</td>
-            <td>${propertyCounts.get(owner.owner_id) || 0}</td>
-            <td>${stats.active}</td>
-            <td>${stats.total}</td>
-          </tr>
-        `;
-      })
-      .join("")
-    : renderEmptyRows("Owners will appear here after they complete onboarding.", 7);
-}
-
-function renderTenantsTable(tenants, tenantAgreementStats) {
-  if (!tenantsTableEl) return;
-
-  const sortedTenants = [...tenants].sort((left, right) =>
-    String(left.name || left.users?.name || "").localeCompare(String(right.name || right.users?.name || ""), undefined, { sensitivity: "base" })
-  );
-
-  tenantsTableEl.innerHTML = sortedTenants.length
-    ? sortedTenants
-      .map((tenant) => {
-        const stats = tenantAgreementStats.get(tenant.tenant_id) || { total: 0, active: 0, pending: 0 };
-        return `
-          <tr>
-            <td>${escapeHtml(tenant.name || tenant.users?.name || "-")}</td>
-            <td>${escapeHtml(tenant.email || tenant.users?.email || "-")}</td>
-            <td>${escapeHtml(tenant.city || "-")}</td>
-            <td>${escapeHtml(tenant.occupation || "-")}</td>
+            <td>${escapeHtml(user.name || "-")}</td>
+            <td>${escapeHtml(user.role || "-")}</td>
+            <td>${escapeHtml(user.email || "-")}</td>
+            <td>${escapeHtml(contact)}</td>
+            <td>${escapeHtml(user.city || "-")}</td>
+            <td>${propertyCountsByUser.get(user.user_id) || 0}</td>
             <td>${stats.active}</td>
             <td>${stats.pending}</td>
-            <td>${stats.total}</td>
           </tr>
         `;
       })
       .join("")
-    : renderEmptyRows("Tenants will appear here after they complete onboarding.", 7);
+    : renderEmptyRows("Users will appear here after registration.", 8);
 }
 
 function renderApplicationsTable(applications) {
@@ -166,52 +140,50 @@ function renderApplicationsTable(applications) {
         <tr>
           <td>${escapeHtml(application.properties?.title || application.properties?.address || "-")}</td>
           <td>${escapeHtml(application.properties?.owners?.users?.name || "-")}</td>
+          <td>${escapeHtml(application.properties?.owners?.phone || application.properties?.owners?.users?.email || "-")}</td>
           <td>${escapeHtml(application.tenants?.users?.name || "-")}</td>
+          <td>${escapeHtml(application.tenants?.phone || application.tenants?.users?.email || "-")}</td>
           <td>${escapeHtml(application.status || "-")}</td>
           <td>${escapeHtml(String(application.created_at || "").slice(0, 10) || "-")}</td>
         </tr>
       `)
       .join("")
-    : renderEmptyRows("Tenant interest requests will appear here after applicants start browsing properties.", 5);
+    : renderEmptyRows("Tenant interest requests will appear here after applicants start browsing properties.", 7);
 }
 
 async function loadAdminDashboard() {
   const user = await requireUser(["admin"]);
   if (!user) return;
 
-  setDashboardStatus("Loading owner, tenant, property, and agreement summaries...");
+  setDashboardStatus("Loading user, property, and agreement summaries...");
 
   try {
-    const [ownersResult, tenantsResult, propertiesResult, agreementsResult, applicationsResult] = await Promise.all([
-      getOwners(),
-      getTenants(),
+    const [usersResult, propertiesResult, agreementsResult, applicationsResult] = await Promise.all([
+      getAllUsers(),
       listProperties(),
       listAgreements(),
       listApplications()
     ]);
 
-    const owners = extractData(ownersResult);
-    const tenants = extractData(tenantsResult);
+    const users = extractData(usersResult);
     const properties = extractData(propertiesResult);
     const agreements = extractData(agreementsResult);
     const applications = extractData(applicationsResult);
 
-    const propertyCounts = buildPropertyCounts(properties);
-    const { ownerStats, tenantStats } = buildAgreementStats(agreements);
+    const propertyCountsByUser = buildPropertyCountsByUser(properties);
+    const agreementStatsByUser = buildAgreementStatsByUser(agreements);
 
-    setMetric(totalOwnersEl, owners.length);
-    setMetric(totalTenantsEl, tenants.length);
+    setMetric(totalUsersEl, users.length);
+    setMetric(activeProfilesEl, users.filter((item) => Boolean(item.profile_completed)).length);
     setMetric(totalPropertiesEl, properties.length);
     setMetric(activeAgreementsEl, agreements.filter((agreement) => isActiveAgreement(agreement.agreement_status)).length);
     setMetric(pendingApprovalsEl, agreements.filter((agreement) => isPendingAgreement(agreement.agreement_status)).length);
 
-    renderOwnersTable(owners, propertyCounts, ownerStats);
-    renderTenantsTable(tenants, tenantStats);
+    renderUsersTable(users, propertyCountsByUser, agreementStatsByUser);
     renderApplicationsTable(applications);
 
     const errors = [
-      ownersResult?.error,
-      tenantsResult?.error,
+      usersResult?.error,
       propertiesResult?.error,
       agreementsResult?.error,
       applicationsResult?.error
@@ -223,7 +195,7 @@ async function loadAdminDashboard() {
       return;
     }
 
-    setDashboardStatus(`Welcome back, ${user.name || "Admin"}. Owners, tenants, properties, and agreement counts are up to date.`);
+    setDashboardStatus(`Welcome back, ${user.name || "Admin"}. User, property, and agreement summaries are up to date.`);
   } catch (error) {
     console.error("Admin dashboard load failed:", error);
     setDashboardStatus("Unable to load the admin dashboard right now.");

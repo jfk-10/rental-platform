@@ -41,7 +41,7 @@ export async function listAgreements() {
   const { data, error } = await supabaseClient
     .from("rental_agreements")
     .select(
-      "agreement_id,property_id,tenant_id,start_date,end_date,deposit_amount,monthly_rent,police_verified,agreement_status,properties!rental_agreements_property_id_fkey(address,city,property_type,owner_id,owners!properties_owner_id_fkey(user_id,users!owners_user_id_fkey(name,email))),tenants!rental_agreements_tenant_id_fkey(user_id,users!tenants_user_id_fkey(name,email))"
+      "agreement_id,property_id,tenant_id,start_date,end_date,deposit_amount,monthly_rent,police_verified,agreement_status,properties!rental_agreements_property_id_fkey(address,city,property_type,owner_id,owners!properties_owner_id_fkey(user_id,phone,users!owners_user_id_fkey(name,email))),tenants!rental_agreements_tenant_id_fkey(user_id,phone,users!tenants_user_id_fkey(name,email))"
     )
     .order("agreement_id", { ascending: false });
 

@@ -34,6 +34,41 @@ const createAgreementButton = adminForm?.querySelector("button[type='submit']");
 const propertyOptionMap = new Map();
 const selectedApplicationsByProperty = new Map();
 
+function normalizePhone(phone) {
+  return String(phone || "").replace(/[^\d+]/g, "");
+}
+
+function getWhatsAppLink(phone, text) {
+  const normalizedPhone = normalizePhone(phone);
+  if (!normalizedPhone) return "";
+  return `https://wa.me/${encodeURIComponent(normalizedPhone)}?text=${encodeURIComponent(text)}`;
+}
+
+function getAgreementContactCell(agreement) {
+  const tenantName = agreement.tenants?.users?.name || "Tenant";
+  const ownerName = agreement.properties?.owners?.users?.name || "Owner";
+  const tenantPhone = agreement.tenants?.phone || "";
+  const ownerPhone = agreement.properties?.owners?.phone || "";
+  const tenantEmail = agreement.tenants?.users?.email || "";
+  const ownerEmail = agreement.properties?.owners?.users?.email || "";
+
+  if (user.role === "tenant") {
+    const chatLink = getWhatsAppLink(ownerPhone, `Hi ${ownerName}, I have a question about agreement #${agreement.agreement_id}.`);
+    if (chatLink) return `<a class="btn btn-ghost" href="${chatLink}" target="_blank" rel="noopener noreferrer">Chat Owner</a>`;
+    return ownerPhone || ownerEmail || "-";
+  }
+
+  if (user.role === "owner") {
+    const chatLink = getWhatsAppLink(tenantPhone, `Hi ${tenantName}, I have a question about agreement #${agreement.agreement_id}.`);
+    if (chatLink) return `<a class="btn btn-ghost" href="${chatLink}" target="_blank" rel="noopener noreferrer">Chat Tenant</a>`;
+    return tenantPhone || tenantEmail || "-";
+  }
+
+  const ownerContact = ownerPhone || ownerEmail || "-";
+  const tenantContact = tenantPhone || tenantEmail || "-";
+  return `<div><strong>Owner:</strong> ${ownerContact}</div><div><strong>Tenant:</strong> ${tenantContact}</div>`;
+}
+
 function canCreateAgreement() {
   return user.role === "admin";
 }
@@ -321,6 +356,7 @@ async function loadAgreementList() {
           <td>${agreement.agreement_id}</td>
           <td>${agreement.properties?.address || "-"}</td>
           <td>${agreement.tenants?.users?.name || "-"}</td>
+          <td>${getAgreementContactCell(agreement)}</td>
           <td>${formatDate(agreement.start_date)} to ${formatDate(agreement.end_date)}</td>
           <td>${formatCurrency(agreement.monthly_rent)}</td>
           <td>${getAgreementDisplayStatus(agreement)}</td>
@@ -328,7 +364,7 @@ async function loadAgreementList() {
         </tr>
       `)
       .join("")
-    : "<tr><td colspan='7' class='table-empty-cell'><div class='empty-state card'><h3>No agreements yet</h3><p>Create an agreement to start the approval workflow.</p><button class='btn btn-primary' type='button' id='refreshAgreements'>Refresh</button></div></td></tr>";
+    : "<tr><td colspan='8' class='table-empty-cell'><div class='empty-state card'><h3>No agreements yet</h3><p>Create an agreement to start the approval workflow.</p><button class='btn btn-primary' type='button' id='refreshAgreements'>Refresh</button></div></td></tr>";
 }
 
 async function requestAgreementEdit(agreementId) {

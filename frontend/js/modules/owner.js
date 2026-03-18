@@ -20,6 +20,16 @@ const applicationsTable = document.getElementById("ownerApplicationsTable");
 
 let lastPropertyActivityStamp = localStorage.getItem(PROPERTY_ACTIVITY_KEY) || "";
 
+function normalizePhone(phone) {
+  return String(phone || "").replace(/[^\d+]/g, "");
+}
+
+function getWhatsAppLink(phone, text) {
+  const normalizedPhone = normalizePhone(phone);
+  if (!normalizedPhone) return "";
+  return `https://wa.me/${encodeURIComponent(normalizedPhone)}?text=${encodeURIComponent(text)}`;
+}
+
 async function refreshOwnerDashboardStats() {
   const [{ data: properties }, { data: agreements }, { data: payments }, { data: maintenance }, applicationsResult] = await Promise.all([
     listProperties(),
@@ -54,6 +64,13 @@ async function refreshOwnerDashboardStats() {
       ? ownerApplications.map((application) => {
         const status = String(application.status || "-");
         const actions = [];
+        const tenantName = application.tenants?.users?.name || "Tenant";
+        const tenantPhone = application.tenants?.phone || "";
+        const tenantEmail = application.tenants?.users?.email || "";
+        const whatsappLink = getWhatsAppLink(
+          tenantPhone,
+          `Hi ${tenantName}, this is regarding your request for "${application.properties?.title || application.properties?.address || "property"}".`
+        );
 
         if (status === "Interested") {
           actions.push(`<button class="btn btn-secondary shortlistApplicationBtn" data-id="${application.application_id}">Shortlist</button>`);
@@ -70,17 +87,22 @@ async function refreshOwnerDashboardStats() {
           actions.push(`<span class="helper-text">No action</span>`);
         }
 
+        if (whatsappLink) {
+          actions.push(`<a class="btn btn-ghost" href="${whatsappLink}" target="_blank" rel="noopener noreferrer">Chat</a>`);
+        }
+
         return `
           <tr>
             <td>${application.properties?.title || application.properties?.address || "-"}</td>
-            <td>${application.tenants?.users?.name || "-"}</td>
+            <td>${tenantName}</td>
+            <td>${tenantPhone || tenantEmail || "-"}</td>
             <td>${status}</td>
             <td>${String(application.created_at || "").slice(0, 10) || "-"}</td>
             <td>${actions.join(" ")}</td>
           </tr>
         `;
       }).join("")
-      : "<tr><td colspan='5' class='table-empty-cell'><div class='empty-state'><h3>No tenant interest yet</h3><p>Interested tenants will appear here once they request a property.</p></div></td></tr>";
+      : "<tr><td colspan='6' class='table-empty-cell'><div class='empty-state'><h3>No tenant interest yet</h3><p>Interested tenants will appear here once they request a property.</p></div></td></tr>";
   }
 }
 
