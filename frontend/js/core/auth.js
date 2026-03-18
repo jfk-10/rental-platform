@@ -14,17 +14,7 @@ const SESSION_KEYS = {
   mode: "sessionMode"
 };
 
-const LEGACY_LOCAL_KEYS = [
-  SESSION_KEYS.authUser,
-  SESSION_KEYS.appUser,
-  SESSION_KEYS.userId,
-  SESSION_KEYS.role,
-  SESSION_KEYS.name,
-  SESSION_KEYS.email,
-  SESSION_KEYS.bootstrapAt,
-  SESSION_KEYS.mode,
-  "loggedInUser"
-];
+const SUPABASE_AUTH_STORAGE_KEY = "nestfinder-auth";
 
 function getLoginPath() {
   return "/pages/login.html";
@@ -50,7 +40,7 @@ function normalizeEmail(value) {
 }
 
 function getSessionValue(key) {
-  return sessionStorage.getItem(key) ?? localStorage.getItem(key);
+  return sessionStorage.getItem(key);
 }
 
 function setSessionValue(key, value) {
@@ -71,38 +61,7 @@ function setSessionJson(key, value) {
   sessionStorage.setItem(key, JSON.stringify(value));
 }
 
-function clearLegacyLocalCache() {
-  LEGACY_LOCAL_KEYS.forEach((key) => {
-    localStorage.removeItem(key);
-  });
-}
-
-function migrateLegacyCache() {
-  if (!sessionStorage.getItem(SESSION_KEYS.authUser)) {
-    const authUser = readJson(localStorage, SESSION_KEYS.authUser);
-    if (authUser) setSessionJson(SESSION_KEYS.authUser, authUser);
-  }
-
-  if (!sessionStorage.getItem(SESSION_KEYS.appUser)) {
-    const appUser = readJson(localStorage, SESSION_KEYS.appUser);
-    if (appUser) setSessionJson(SESSION_KEYS.appUser, appUser);
-  }
-
-  [SESSION_KEYS.userId, SESSION_KEYS.role, SESSION_KEYS.name, SESSION_KEYS.email, SESSION_KEYS.bootstrapAt, SESSION_KEYS.mode]
-    .forEach((key) => {
-      if (sessionStorage.getItem(key) == null) {
-        const value = localStorage.getItem(key);
-        if (value != null) {
-          sessionStorage.setItem(key, value);
-        }
-      }
-    });
-
-  clearLegacyLocalCache();
-}
-
 function getStoredSessionMode() {
-  migrateLegacyCache();
   return getSessionValue(SESSION_KEYS.mode) || "supabase";
 }
 
@@ -134,18 +93,14 @@ function isHydratedRoleProfile(user) {
 }
 
 export function getStoredAuthUser() {
-  migrateLegacyCache();
   return readJson(sessionStorage, SESSION_KEYS.authUser);
 }
 
 export function getStoredUser() {
-  migrateLegacyCache();
   return readJson(sessionStorage, SESSION_KEYS.appUser);
 }
 
 export function storeUserSession(authUser, appUser = null, { mode = getStoredSessionMode() } = {}) {
-  migrateLegacyCache();
-
   if (authUser) {
     setSessionJson(SESSION_KEYS.authUser, {
       id: authUser.id,
@@ -163,15 +118,13 @@ export function storeUserSession(authUser, appUser = null, { mode = getStoredSes
 
   setSessionValue(SESSION_KEYS.bootstrapAt, Date.now());
   setSessionValue(SESSION_KEYS.mode, mode);
-  clearLegacyLocalCache();
 }
 
 export function clearStoredUser() {
   Object.values(SESSION_KEYS).forEach((key) => {
     sessionStorage.removeItem(key);
   });
-
-  clearLegacyLocalCache();
+  sessionStorage.removeItem(SUPABASE_AUTH_STORAGE_KEY);
 }
 
 function shouldRetrySessionLookup() {
