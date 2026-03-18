@@ -10,9 +10,25 @@
   <link rel="stylesheet" href="../css/dashboard.css" />
 </head>
 <body class="app-body">
-  <div class="utility-bar" id="dashboardNavbar"></div>
-
   <main class="page-shell content-stack" style="max-width:760px">
+    <section id="unifiedProfileSection" class="page-card" hidden>
+      <h2 class="section-title">Complete your profile</h2>
+      <p class="section-subtitle">One-time setup for both Owner and Tenant modes.</p>
+      <form id="unifiedProfileForm" class="form-grid" style="margin-top:1rem">
+        <div>
+          <label for="profilePhone">Phone Number <span style="color:var(--danger)">*</span></label>
+          <input type="tel" id="profilePhone" placeholder="+91 00000 00000" required />
+        </div>
+        <div>
+          <label for="profileCity">City <span style="color:var(--danger)">*</span></label>
+          <input type="text" id="profileCity" placeholder="e.g. Bangalore" required />
+        </div>
+        <div class="full actions-row" style="margin-top:0">
+          <button id="saveUnifiedProfileBtn" class="btn btn-primary" type="submit">Save &amp; Continue</button>
+        </div>
+      </form>
+    </section>
+
     <section class="page-card">
       <h2 class="section-title">Choose your dashboard</h2>
       <p class="section-subtitle">Use the same account for both Owner and Tenant workflows.</p>
@@ -28,6 +44,5 @@
 
   <script type="module" src="../js/authGuard.js"></script>
   <script type="module" src="../js/modules/selectDashboard.js"></script>
-  <script type="module" src="../components/navbar.js"></script>
 </body>
 </html>

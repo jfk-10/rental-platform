@@ -7,6 +7,23 @@ import supabaseClient from "../core/supabaseClient.js";
 const user = await requireUser(["owner"]);
 if (!user) throw new Error("Unauthorised");
 
+const { data: profileStatus, error: profileStatusError } = await supabaseClient
+  .from("users")
+  .select("profile_completed")
+  .eq("user_id", user.user_id)
+  .maybeSingle();
+
+if (profileStatusError) {
+  showToast("Unable to verify profile completion. Please try again.", "error");
+  throw profileStatusError;
+}
+
+if (!profileStatus?.profile_completed) {
+  showToast("Complete your profile first to add a property.", "warning");
+  window.location.href = "/dashboards/owner.html";
+  throw new Error("Profile incomplete");
+}
+
 // ── DOM refs ──────────────────────────────────────────────────
 const form             = document.getElementById("propertyForm");
 const typeSelect       = document.getElementById("propertyType");
@@ -297,4 +314,3 @@ form.addEventListener("submit", async (e) => {
 // ── Init ─────────────────────────────────────────────────────
 applyTypeVisibility();
 syncPreviewUI();
-

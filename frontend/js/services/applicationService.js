@@ -159,6 +159,17 @@ export async function createApplication({ property_id, tenantUserId, message = "
     return { data: null, error: new Error("Invalid property or tenant selection.") };
   }
 
+  const { data: tenantUser, error: tenantUserError } = await supabaseClient
+    .from("users")
+    .select("profile_completed")
+    .eq("user_id", normalizedTenantUserId)
+    .maybeSingle();
+
+  if (tenantUserError) return { data: null, error: tenantUserError };
+  if (!tenantUser?.profile_completed) {
+    return { data: null, error: new Error("Complete your profile before sending agreement requests.") };
+  }
+
   const { data: propertyRow, error: propertyLookupError } = await supabaseClient
     .from("properties")
     .select("owner_id")

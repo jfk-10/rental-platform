@@ -1,10 +1,19 @@
 import { requireUser } from "../core/auth.js";
+import supabaseClient from "../core/supabaseClient.js";
 import { createApplication, listApplications } from "../services/applicationService.js";
 import { PROPERTY_IMAGE_PLACEHOLDER, listProperties } from "../services/propertyService.js";
 import { formatCurrency, showToast } from "../utils/helpers.js";
 
 const user = await requireUser(["tenant"]);
 if (!user) throw new Error("Unauthorised");
+
+const { data: profileStatus, error: profileStatusError } = await supabaseClient
+  .from("users")
+  .select("profile_completed")
+  .eq("user_id", user.user_id)
+  .maybeSingle();
+
+const canRequestAgreement = !profileStatusError && Boolean(profileStatus?.profile_completed);
 
 const browseGrid = document.getElementById("browseRentalsGrid");
 const browseSummary = document.getElementById("browseSummary");
@@ -77,7 +86,7 @@ function renderPropertyCard(property) {
   const interestLabel = application?.status || "";
   const interestAction = application
     ? `<button class="btn btn-ghost" type="button" disabled>${interestLabel}</button>`
-    : `<button class="btn btn-primary interestBtn" type="button" data-id="${property.property_id}">I'm Interested</button>`;
+    : `<button class="btn btn-primary interestBtn" type="button" data-id="${property.property_id}" ${canRequestAgreement ? "" : "disabled"}>${canRequestAgreement ? "I'm Interested" : "Complete Profile First"}</button>`;
 
   return `
     <article class="property-card card property-card--tenant">
@@ -158,6 +167,9 @@ async function loadBrowseRentals() {
   if (!browseGrid) return;
 
   if (browseSummary) browseSummary.textContent = "Loading rentals...";
+  if (!canRequestAgreement) {
+    showToast("Complete your profile in Tenant Dashboard before sending agreement requests.", "warning");
+  }
   browseGrid.innerHTML = renderEmptyState("Loading rentals", "Fetching the latest listings for you.");
   try {
     const [{ data, error }, applicationsResult] = await Promise.all([
@@ -205,6 +217,11 @@ async function loadBrowseRentals() {
 }
 
 async function expressInterest(propertyId, button) {
+  if (!canRequestAgreement) {
+    showToast("Complete your profile first from Tenant Dashboard.", "warning");
+    return;
+  }
+
   const property = propertyMap.get(propertyId);
   if (!property) {
     showToast("Unable to find this listing.", "error");

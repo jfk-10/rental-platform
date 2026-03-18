@@ -217,7 +217,7 @@ async function getUserWithProfileByEmail(email, { authUserId = "" } = {}) {
 
   const { data: user, error: userError } = await supabaseClient
     .from("users")
-    .select("user_id,name,email,role,auth_user_id")
+    .select("user_id,name,email,role,auth_user_id,profile_completed")
     .eq("email", normalizedEmail)
     .maybeSingle();
 
@@ -230,7 +230,7 @@ async function getUserWithProfileByEmail(email, { authUserId = "" } = {}) {
       .from("users")
       .update({ auth_user_id: authUserId })
       .eq("user_id", user.user_id)
-      .select("user_id,name,email,role,auth_user_id")
+      .select("user_id,name,email,role,auth_user_id,profile_completed")
       .single();
 
     if (!updateError && updatedUser) {
