@@ -44,6 +44,12 @@ export function getMonthKeyFromValue(value) {
   return String(value || "").slice(0, 7);
 }
 
+export function getMonthDateValue(value) {
+  const monthKey = getMonthKeyFromValue(value);
+  if (!/^\d{4}-\d{2}$/.test(monthKey)) return "";
+  return `${monthKey}-01`;
+}
+
 export function getCurrentMonthKey(date = new Date()) {
   return date.toISOString().slice(0, 7);
 }
@@ -116,9 +122,11 @@ export async function listPayments() {
 }
 
 export async function createPayment(payload) {
+  const paymentMonth = getMonthDateValue(payload?.payment_month) || payload?.payment_month;
+
   return supabaseClient
     .from("rent_payments")
-    .insert([payload])
+    .insert([{ ...payload, payment_month: paymentMonth }])
     .select()
     .single();
 }
