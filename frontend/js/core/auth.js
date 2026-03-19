@@ -84,7 +84,6 @@ export function clearStoredUser() {
   Object.values(SESSION_KEYS).forEach((key) => {
     sessionStorage.removeItem(key);
   });
-  sessionStorage.removeItem(SUPABASE_AUTH_STORAGE_KEY);
 }
 
 function wait(ms) {
@@ -204,7 +203,15 @@ export async function syncStoredUserWithSession() {
   const localModeUser = getLocalModeUser();
 
   if (session?.user?.email) {
-    return getUserWithProfileByAuth(session.user);
+    // If profile hydration temporarily fails, don't treat it as logged out.
+    // Fallback to the last cached per-tab user.
+    const hydrated = await getUserWithProfileByAuth(session.user);
+    if (hydrated) return hydrated;
+
+    const cachedUser = getStoredUser();
+    if (cachedUser) return cachedUser;
+
+    return null;
   }
 
   if (localModeUser) {
@@ -288,7 +295,14 @@ export function watchAuthState(onChange) {
     }
 
     const user = await getUserWithProfileByAuth(activeSession.user);
-    emitIfLatest(user);
+    // If hydration fails, keep the last cached per-tab user.
+    if (user) {
+      emitIfLatest(user);
+      return;
+    }
+
+    const cachedUser = getStoredUser();
+    emitIfLatest(cachedUser || null);
   });
 }
 
