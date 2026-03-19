@@ -1,12 +1,29 @@
 const SUPABASE_URL = "https://ydrcwahxucotegzewzqj.supabase.co";
 const SUPABASE_KEY = "sb_publishable_2Re28ix5_9kiunhi1VDiaw_rYf5UcAy";
 
-const createClient = await import("https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm")
-  .then((module) => module.createClient)
-  .catch((error) => {
-    console.error("Failed to load Supabase SDK from CDN.", error);
-    return null;
-  });
+const SUPABASE_CDN_SOURCES = [
+  "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm",
+  "https://esm.sh/@supabase/supabase-js@2",
+  "https://unpkg.com/@supabase/supabase-js@2/dist/module/index.js"
+];
+
+async function loadCreateClient() {
+  for (const source of SUPABASE_CDN_SOURCES) {
+    try {
+      const module = await import(source);
+      if (typeof module.createClient === "function") {
+        return module.createClient;
+      }
+    } catch (error) {
+      console.warn(`Failed to load Supabase SDK from ${source}.`, error);
+    }
+  }
+
+  console.error("Supabase SDK failed to load from all configured CDNs.");
+  return null;
+}
+
+const createClient = await loadCreateClient();
 
 function buildUnavailableError() {
   return new Error("Supabase client unavailable. Check network/CDN access and retry.");
