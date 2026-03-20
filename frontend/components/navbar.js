@@ -175,9 +175,9 @@ async function renderNavbar(user) {
 async function loadNavbar() {
   const resolvedUser = await syncStoredUserWithSession();
   bootstrapped = true;
-  const finalUser = queuedAuthUser !== undefined ? queuedAuthUser : resolvedUser;
+  const finalUser = resolvedUser || (queuedAuthUser !== undefined ? queuedAuthUser : null);
   queuedAuthUser = undefined;
-  await renderNavbar(finalUser || null);
+  await renderNavbar(finalUser);
 }
 
 let bootstrapped = false;
