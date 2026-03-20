@@ -45,7 +45,7 @@ function getRouteHeaderMode(pathname) {
 }
 
 function applyRouteNavigationMode({ useDashboardNavbar }, user) {
-  const dashboardNavbar = document.getElementById("dashboardNavbar");
+  const dashboardNavbar = document.getElementById("navbar");
   const publicHeader = document.getElementById("publicPropertyHeader");
 
   if (!dashboardNavbar && !publicHeader) return;

@@ -58,7 +58,8 @@ function wireHamburger(container) {
   });
 }
 
-let renderSequence = 0;
+let bootstrapped = false;
+let currentRender = 0;
 
 async function renderNavbar() {
   const container = document.getElementById("navbar");
@@ -67,9 +68,13 @@ async function renderNavbar() {
     return;
   }
 
+  const renderID = ++currentRender;
   const appUser = await syncStoredUserWithSession();
+  
+  // Prevent race condition where newer render completes after older one
+  if (renderID !== currentRender) return;
+  
   const prefix = getBasePrefix();
-  const currentRender = ++renderSequence;
 
   // If user is logged in, render full navbar with role-based links
   if (appUser?.email) {
@@ -92,7 +97,10 @@ async function renderNavbar() {
       </div>
     `;
     
-    wireHamburger(container);
+    // Only wire hamburger if this render is still current
+    if (renderID === currentRender) {
+      wireHamburger(container);
+    }
   } else {
     // If user is not logged in, render simple navbar with auth buttons
     const navRight = container.querySelector(".nav-right");
@@ -114,19 +122,21 @@ async function renderNavbar() {
       `;
     }
   }
-
-  // Prevent race condition where newer render completes after older one
-  if (currentRender !== renderSequence) return;
 }
 
-let bootstrapped = false;
-
-document.addEventListener("DOMContentLoaded", async () => {
+// Wait for DOM to be ready before rendering
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", async () => {
+    bootstrapped = true;
+    await renderNavbar();
+  });
+} else {
+  // DOM already loaded (script loaded after DOMContentLoaded)
   bootstrapped = true;
-  await renderNavbar();
-});
+  void renderNavbar();
+}
 
-// Re-render when auth state changes
+// Re-render when auth state changes (only after bootstrap)
 watchAuthState(() => {
   if (bootstrapped) {
     void renderNavbar();
@@ -135,7 +145,7 @@ watchAuthState(() => {
 
 // Re-render on page show (browser back/forward button)
 window.addEventListener("pageshow", (event) => {
-  if (event.persisted) {
+  if (event.persisted && bootstrapped) {
     void renderNavbar();
   }
 });
