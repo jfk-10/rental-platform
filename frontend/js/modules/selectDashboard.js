@@ -215,5 +215,3 @@ tenantBtn?.addEventListener("click", () => {
 if (hintEl) {
   hintEl.textContent = "You can switch modes anytime by coming back to this page.";
 }
-
-await loadUnifiedProfileState();

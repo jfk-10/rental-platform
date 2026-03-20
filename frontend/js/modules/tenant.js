@@ -7,6 +7,10 @@ import { listMaintenanceRequests } from "../services/maintenanceService.js";
 // Initialize with error handling
 let user = null;
 
+function normalizeStatus(value) {
+  return String(value || "").trim().toUpperCase();
+}
+
 const applicationsTable = document.getElementById("tenantApplicationsTable");
 const upcomingPaymentMeta = document.getElementById("tenantUpcomingPaymentMeta");
 const payNowBtn = document.getElementById("tenantPayNowBtn");
@@ -38,7 +42,7 @@ async function loadTenantDashboard() {
   renderApplicationsTable(applications);
 
   const tenantAgreements = (agreements || []).filter((item) => item.tenants?.user_id === user.user_id);
-  const activeAgreement = tenantAgreements.find((item) => item.agreement_status === "Active");
+  const activeAgreement = tenantAgreements.find((item) => normalizeStatus(item.agreement_status) === "ACTIVE");
   const tenantAgreementIds = new Set(tenantAgreements.map((item) => item.agreement_id));
   const tenantPayments = (payments || []).filter((item) => tenantAgreementIds.has(item.agreement_id));
   const tenantMaintenance = (maintenance || []).filter((item) => tenantAgreementIds.has(item.agreement_id));

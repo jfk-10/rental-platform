@@ -20,6 +20,10 @@ const applicationsTable = document.getElementById("ownerApplicationsTable");
 
 let lastPropertyActivityStamp = localStorage.getItem(PROPERTY_ACTIVITY_KEY) || "";
 
+function normalizeStatus(value) {
+  return String(value || "").trim().toUpperCase();
+}
+
 function normalizePhone(phone) {
   return String(phone || "").replace(/[^\d+]/g, "");
 }
@@ -42,7 +46,7 @@ async function refreshOwnerDashboardStats() {
   const ownerProperties = (properties || []).filter((item) => item.owners?.user_id === user.user_id);
   const ownerPropertyIds = new Set(ownerProperties.map((item) => item.property_id));
   const ownerAgreements = (agreements || []).filter((item) => ownerPropertyIds.has(item.property_id));
-  const activeAgreements = ownerAgreements.filter((item) => item.agreement_status === "Active");
+  const activeAgreements = ownerAgreements.filter((item) => normalizeStatus(item.agreement_status) === "ACTIVE");
   const ownerAgreementIds = new Set(ownerAgreements.map((item) => item.agreement_id));
   const ownerPayments = (payments || []).filter((item) => ownerAgreementIds.has(item.agreement_id));
   const ownerMaintenance = (maintenance || []).filter((item) => ownerAgreementIds.has(item.agreement_id));
