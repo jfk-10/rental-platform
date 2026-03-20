@@ -64,20 +64,47 @@ let currentRender = 0;
 async function renderNavbar() {
   const container = document.getElementById("navbar");
   if (!container) {
-    console.warn("Navbar container (id='navbar') not found");
+    console.warn("🔴 Navbar container (id='navbar') not found");
     return;
   }
 
   const renderID = ++currentRender;
-  const appUser = await syncStoredUserWithSession();
+  console.log(`🔵 Navbar render #${renderID} starting...`);
+  
+  // Try to get user from sessionStorage first (immediate render)
+  let appUser = null;
+  const storedUserStr = sessionStorage.getItem("appUser");
+  if (storedUserStr) {
+    try {
+      appUser = JSON.parse(storedUserStr);
+      console.log(`🟢 Navbar render #${renderID} - Found user in sessionStorage:`, appUser ? `${appUser.name} (${appUser.role})` : "No user");
+    } catch (e) {
+      console.error("Error parsing stored user:", e);
+    }
+  }
+  
+  // If not in sessionStorage, fetch from auth (will update navbar when ready)
+  if (!appUser) {
+    console.log(`🟡 Navbar render #${renderID} - No user in sessionStorage, syncing with auth...`);
+    try {
+      appUser = await syncStoredUserWithSession();
+      console.log(`🔵 Navbar render #${renderID} - Auth sync completed:`, appUser ? `${appUser.name} (${appUser.role})` : "No user");
+    } catch (error) {
+      console.error(`🔴 Navbar render #${renderID} - Error syncing user session:`, error);
+    }
+  }
   
   // Prevent race condition where newer render completes after older one
-  if (renderID !== currentRender) return;
+  if (renderID !== currentRender) {
+    console.log(`🟡 Navbar render #${renderID} cancelled - newer render ${currentRender} in progress`);
+    return;
+  }
   
   const prefix = getBasePrefix();
 
   // If user is logged in, render full navbar with role-based links
   if (appUser?.email) {
+    console.log(`🟢 Navbar render #${renderID} - Rendering authenticated navbar for ${appUser.role}`);
     const navLinks = getNavbarLinksForRole(appUser.role);
     const userInitials = getUserInitials(appUser.name || appUser.email);
     
@@ -102,38 +129,36 @@ async function renderNavbar() {
       wireHamburger(container);
     }
   } else {
-    // If user is not logged in, render simple navbar with auth buttons
-    const navRight = container.querySelector(".nav-right");
-    if (navRight) {
-      navRight.innerHTML = `
-        <a href="${prefix}pages/login.html" class="btn btn-secondary">Login</a>
-        <a href="${prefix}pages/register.html" class="btn btn-primary">Register</a>
-      `;
-    } else {
-      // Fallback for public pages without nav-right class
-      container.innerHTML = `
-        <div class="app-nav">
-          <a class="app-brand" href="${prefix}index.html">NestFinder</a>
-          <div class="app-user-actions">
-            <a href="${prefix}pages/login.html" class="btn btn-secondary">Login</a>
-            <a href="${prefix}pages/register.html" class="btn btn-primary">Register</a>
-          </div>
+    // No user logged in - render fallback navbar with auth buttons
+    console.log(`🟡 Navbar render #${renderID} - Rendering fallback navbar (no user)`);
+    container.innerHTML = `
+      <div class="app-nav">
+        <a class="app-brand" href="${prefix}index.html">NestFinder</a>
+        <div class="app-user-actions">
+          <a href="${prefix}pages/login.html" class="btn btn-secondary">Login</a>
+          <a href="${prefix}pages/register.html" class="btn btn-primary">Register</a>
         </div>
-      `;
-    }
+      </div>
+    `;
   }
 }
 
 // Wait for DOM to be ready before rendering
+async function initializeNavbar() {
+  // Small delay to allow auth module to initialize (50ms should be enough)
+  await new Promise(resolve => setTimeout(resolve, 50));
+  bootstrapped = true;
+  console.log("🟢 Navbar bootstrapping...");
+  await renderNavbar();
+}
+
 if (document.readyState === "loading") {
-  document.addEventListener("DOMContentLoaded", async () => {
-    bootstrapped = true;
-    await renderNavbar();
+  document.addEventListener("DOMContentLoaded", () => {
+    void initializeNavbar();
   });
 } else {
   // DOM already loaded (script loaded after DOMContentLoaded)
-  bootstrapped = true;
-  void renderNavbar();
+  void initializeNavbar();
 }
 
 // Re-render when auth state changes (only after bootstrap)
