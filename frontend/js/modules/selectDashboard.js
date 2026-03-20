@@ -13,18 +13,34 @@ const profileCityInput = document.getElementById("profileCity");
 
 // ─── Module-level user variable ───────────────────────────────
 let user = null;
+let initializationPromise = null;
+
+setDashboardButtonsDisabled(true);
+
+async function resolveActiveUser() {
+  if (user?.user_id) return user;
+
+  const syncedUser = await syncStoredUserWithSession();
+  if (!syncedUser?.user_id) {
+    throw new Error("Could not find an active user session. Please log in again.");
+  }
+
+  user = syncedUser;
+  return user;
+}
 
 // Initialize with error handling
-setTimeout(async () => {
+initializationPromise = (async () => {
   try {
     console.log("🟢 selectDashboard.js initializing...");
-    
-    user = await requireUser(["owner", "tenant", "admin"]);
-    if (!user) {
+
+    const authorizedUser = await requireUser(["owner", "tenant", "admin"]);
+    if (!authorizedUser) {
       console.error("🔴 selectDashboard: User not authorized");
       throw new Error("Unauthorised");
     }
-    
+
+    user = authorizedUser;
     console.log("🟢 selectDashboard: User authorized", user.role);
 
     if (user.role === "admin") {
@@ -34,7 +50,7 @@ setTimeout(async () => {
     }
 
     // Load profile state
-    await loadUnifiedProfileState();
+    await loadUnifiedProfileState(user);
     console.log("🟢 selectDashboard: Initialized successfully");
   } catch (error) {
     console.error("🔴 selectDashboard initialization error:", error);
@@ -43,7 +59,7 @@ setTimeout(async () => {
       hintEl.style.color = "var(--danger)";
     }
   }
-}, 100);
+})();
 
 function setLoading(button, loading, label) {
   if (!button) return;
@@ -56,22 +72,22 @@ function setDashboardButtonsDisabled(disabled) {
   if (tenantBtn) tenantBtn.disabled = disabled;
 }
 
-async function loadUnifiedProfileState() {
+async function loadUnifiedProfileState(activeUser) {
   const [{ data: userRow, error: userError }, { data: ownerRow }, { data: tenantRow }] = await Promise.all([
     supabaseClient
       .from("users")
       .select("profile_completed")
-      .eq("user_id", user.user_id)
+      .eq("user_id", activeUser.user_id)
       .maybeSingle(),
     supabaseClient
       .from("owners")
       .select("phone,city")
-      .eq("user_id", user.user_id)
+      .eq("user_id", activeUser.user_id)
       .maybeSingle(),
     supabaseClient
       .from("tenants")
       .select("phone,city")
-      .eq("user_id", user.user_id)
+      .eq("user_id", activeUser.user_id)
       .maybeSingle()
   ]);
 
@@ -80,8 +96,8 @@ async function loadUnifiedProfileState() {
   }
 
   const profileCompleted = Boolean(userRow?.profile_completed);
-  const profilePhone = ownerRow?.phone || tenantRow?.phone || user.phone || "";
-  const profileCity = ownerRow?.city || tenantRow?.city || user.city || "";
+  const profilePhone = ownerRow?.phone || tenantRow?.phone || activeUser.phone || "";
+  const profileCity = ownerRow?.city || tenantRow?.city || activeUser.city || "";
 
   if (profilePhoneInput) profilePhoneInput.value = profilePhone;
   if (profileCityInput) profileCityInput.value = profileCity;
@@ -113,10 +129,15 @@ unifiedProfileForm?.addEventListener("submit", async (event) => {
   }
 
   try {
+    if (initializationPromise) {
+      await initializationPromise;
+    }
+    const activeUser = await resolveActiveUser();
+
     const [{ error: ownerError }, { error: tenantError }, { error: userError }] = await Promise.all([
-      supabaseClient.from("owners").upsert({ user_id: user.user_id, phone, city }, { onConflict: "user_id" }),
-      supabaseClient.from("tenants").upsert({ user_id: user.user_id, phone, city }, { onConflict: "user_id" }),
-      supabaseClient.from("users").update({ profile_completed: true }).eq("user_id", user.user_id)
+      supabaseClient.from("owners").upsert({ user_id: activeUser.user_id, phone, city }, { onConflict: "user_id" }),
+      supabaseClient.from("tenants").upsert({ user_id: activeUser.user_id, phone, city }, { onConflict: "user_id" }),
+      supabaseClient.from("users").update({ profile_completed: true }).eq("user_id", activeUser.user_id)
     ]);
 
     if (ownerError || tenantError || userError) {
@@ -147,10 +168,15 @@ async function switchMode(nextRole) {
   setLoading(tenantBtn, true, "Tenant Dashboard");
 
   try {
+    if (initializationPromise) {
+      await initializationPromise;
+    }
+    const activeUser = await resolveActiveUser();
+
     const { data: updatedUser, error: updateError } = await supabaseClient
       .from("users")
       .update({ role: nextRole })
-      .eq("user_id", user.user_id)
+      .eq("user_id", activeUser.user_id)
       .select("user_id,name,email,role,auth_user_id,profile_completed")
       .single();
 
@@ -169,7 +195,7 @@ async function switchMode(nextRole) {
     if (nextRole === "owner") {
       const { error: ownerError } = await supabaseClient
         .from("owners")
-        .upsert({ user_id: user.user_id }, { onConflict: "user_id" });
+        .upsert({ user_id: activeUser.user_id }, { onConflict: "user_id" });
       if (ownerError) {
         console.error("🔴 selectDashboard: Error creating owner record:", ownerError);
         throw ownerError;
@@ -180,7 +206,7 @@ async function switchMode(nextRole) {
     if (nextRole === "tenant") {
       const { error: tenantError } = await supabaseClient
         .from("tenants")
-        .upsert({ user_id: user.user_id }, { onConflict: "user_id" });
+        .upsert({ user_id: activeUser.user_id }, { onConflict: "user_id" });
       if (tenantError) {
         console.error("🔴 selectDashboard: Error creating tenant record:", tenantError);
         throw tenantError;
