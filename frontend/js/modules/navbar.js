@@ -1,5 +1,21 @@
 import { syncStoredUserWithSession, watchAuthState } from "../core/auth.js";
 
+// Pages where navbar should NOT render (landing/choice pages)
+const PAGES_WITHOUT_NAVBAR = [
+  "/pages/select-dashboard.html",
+  "/pages/discover.html",
+  "/pages/about.html",
+  "/pages/terms.html",
+  "/pages/login.html",
+  "/pages/register.html",
+  "/index.html"
+];
+
+function isNarbarHiddenPage() {
+  const path = window.location.pathname;
+  return PAGES_WITHOUT_NAVBAR.some(page => path.endsWith(page));
+}
+
 function getBasePrefix() {
   const path = window.location.pathname;
   if (path.includes("/pages/") || path.includes("/dashboards/")) return "../";
@@ -65,6 +81,13 @@ async function renderNavbar() {
   const container = document.getElementById("navbar");
   if (!container) {
     console.warn("🔴 Navbar container (id='navbar') not found");
+    return;
+  }
+
+  // Skip navbar rendering on certain pages (landing, choice pages, auth pages)
+  if (isNarbarHiddenPage()) {
+    console.log("🟡 Navbar skipped - this page doesn't need navbar");
+    container.innerHTML = ""; // Clear the container
     return;
   }
 

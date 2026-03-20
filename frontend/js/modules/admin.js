@@ -203,4 +203,14 @@ async function loadAdminDashboard() {
   }
 }
 
-await loadAdminDashboard();
+// Initialize dashboard with a small delay to let DOM settle
+setTimeout(async () => {
+  try {
+    console.log("🟢 admin.js: Initializing...");
+    await loadAdminDashboard();
+    console.log("🟢 admin.js: Loaded successfully");
+  } catch (error) {
+    console.error("🔴 admin.js initialization error:", error);
+    setDashboardStatus("Error initializing dashboard");
+  }
+}, 100);

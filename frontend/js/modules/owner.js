@@ -6,8 +6,8 @@ import { listPayments } from "../services/paymentService.js";
 import { listMaintenanceRequests } from "../services/maintenanceService.js";
 import { showToast } from "../utils/helpers.js";
 
-const user = await requireUser(["owner"]);
-if (!user) throw new Error("Unauthorised");
+// Initialize with error handling
+let user = null;
 
 const PROPERTY_ACTIVITY_KEY = "propertiesUpdatedAt";
 
@@ -182,4 +182,24 @@ applicationsTable?.addEventListener("click", async (event) => {
   }
 });
 
-await refreshOwnerDashboardStats();
+// Initialize owner dashboard with error handling
+setTimeout(async () => {
+  try {
+    console.log("🟢 owner.js: Initializing...");
+    
+    user = await requireUser(["owner"]);
+    if (!user) {
+      console.error("🔴 owner.js: User not authorized");
+      throw new Error("Unauthorised");
+    }
+    
+    console.log("🟢 owner.js: User authorized, loading dashboard...");
+    await refreshOwnerDashboardStats();
+    console.log("🟢 owner.js: Loaded successfully");
+  } catch (error) {
+    console.error("🔴 owner.js initialization error:", error);
+    if (totalPropertiesEl?.parentElement?.parentElement) {
+      totalPropertiesEl.parentElement.parentElement.textContent = "Error loading dashboard";
+    }
+  }
+}, 100);

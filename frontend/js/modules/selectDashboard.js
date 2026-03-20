@@ -11,14 +11,36 @@ const saveUnifiedProfileBtn = document.getElementById("saveUnifiedProfileBtn");
 const profilePhoneInput = document.getElementById("profilePhone");
 const profileCityInput = document.getElementById("profileCity");
 
-const user = await requireUser(["owner", "tenant", "admin"]);
-if (!user) {
-  throw new Error("Unauthorised");
-}
+// Initialize with error handling
+(async () => {
+  try {
+    console.log("🟢 selectDashboard.js initializing...");
+    
+    const user = await requireUser(["owner", "tenant", "admin"]);
+    if (!user) {
+      console.error("🔴 selectDashboard: User not authorized");
+      throw new Error("Unauthorised");
+    }
+    
+    console.log("🟢 selectDashboard: User authorized", user.role);
 
-if (user.role === "admin") {
-  window.location.href = "/dashboards/admin.html";
-}
+    if (user.role === "admin") {
+      console.log("🟢 selectDashboard: Admin detected, redirecting to admin dashboard");
+      window.location.href = "/dashboards/admin.html";
+      return;
+    }
+
+    // Load profile state
+    await loadUnifiedProfileState();
+    console.log("🟢 selectDashboard: Initialized successfully");
+  } catch (error) {
+    console.error("🔴 selectDashboard initialization error:", error);
+    if (hintEl) {
+      hintEl.textContent = `Error loading page: ${error.message}`;
+      hintEl.style.color = "var(--danger)";
+    }
+  }
+})();
 
 function setLoading(button, loading, label) {
   if (!button) return;
