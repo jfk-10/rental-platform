@@ -63,15 +63,49 @@
     .dash-section-head h2 { font-size: 1rem; margin-bottom: 0.15rem; }
     .dash-section-head p { font-size: 0.82rem; color: var(--text-secondary); margin: 0; }
 
-    /* ── Table fixes ── */
-    .table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
-    .table-wrap table { width: 100%; border-collapse: collapse; font-size: 0.875rem; }
-    .table-wrap th, .table-wrap td { padding: 0.7rem 1rem; text-align: left; border-bottom: 1px solid var(--line); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; vertical-align: middle; }
-    .table-wrap th { font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-secondary); background: var(--surface-soft); }
+    /* ── Table fixes — scroll on mobile ── */
+    .table-wrap {
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      background:
+        linear-gradient(to right, var(--surface) 30%, rgba(255,255,255,0)),
+        linear-gradient(to left,  var(--surface) 30%, rgba(255,255,255,0)) 100% 0,
+        radial-gradient(farthest-side at 0 50%, rgba(15,23,42,0.08), transparent),
+        radial-gradient(farthest-side at 100% 50%, rgba(15,23,42,0.08), transparent) 100% 0;
+      background-repeat: no-repeat;
+      background-size: 40px 100%, 40px 100%, 14px 100%, 14px 100%;
+      background-attachment: local, local, scroll, scroll;
+    }
+    .table-wrap table { width: 100%; border-collapse: collapse; font-size: 0.875rem; min-width: 520px; }
+    .table-wrap th, .table-wrap td { padding: 0.7rem 1rem; text-align: left; border-bottom: 1px solid var(--line); white-space: nowrap; vertical-align: middle; }
+    .table-wrap th { font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-secondary); background: var(--surface-soft); }
     .table-wrap tr:last-child td { border-bottom: none; }
     .table-wrap tr:hover td { background: var(--surface-soft); }
 
-    @media (max-width: 600px) { .dash-main { padding: 1rem; } }
+    @media (max-width: 600px) {
+      .dash-main { padding: 0.85rem; 
+      /* Forms go single column */
+      .form-grid { grid-template-columns: 1fr !important; }
+      .form-grid .full { grid-column: 1; }
+
+      /* Property grid single column */
+      .properties-grid,
+      .property-grid { grid-template-columns: 1fr !important; }
+
+      /* Actions row stack */
+      .actions-row { flex-direction: column; }
+      .actions-row .btn { width: 100%; justify-content: center; }
+
+      /* Table tighter padding */
+      .table-wrap th,
+      .table-wrap td { padding: 0.55rem 0.75rem; font-size: 0.82rem; }
+
+      /* Page card padding */
+      .page-card { padding: 1rem; }
+    }
+      .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+      .dash-section-head { padding: 0.85rem 1rem; }
+    }
   </style>
 </head>
 <body class="app-body">
